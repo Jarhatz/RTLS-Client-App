@@ -1,20 +1,34 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import 'react-native-gesture-handler';
+import React, {useState, useEffect} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+import HomePage from './pages/HomePage';
+import JoinSitePage from './pages/JoinSite';
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const App = () => {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  const Stack = createStackNavigator();
+
+  if (loggedIn) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions = {{headerShown: false}}>
+          <Stack.Screen name = 'HomePage' component = {HomePage}/>
+        </Stack.Navigator>
+      </NavigationContainer>
+    )
+  } else {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions = {{headerShown: false}}>
+          <Stack.Screen name = 'JoinSite' component = {JoinSitePage}/>
+          <Stack.Screen name = 'HomePage' component = {HomePage}/>
+        </Stack.Navigator>
+      </NavigationContainer>
+    )
+  }
+};
+
+export default App;
