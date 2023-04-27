@@ -1,74 +1,83 @@
-import React from 'react';
-import {Dimensions, StyleSheet, SafeAreaView, Text} from 'react-native';
-import {Button, TextInput, IconButton} from '@react-native-material/core';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {MaterialCommunityIcons} from '@expo/vector-icons';
-import {Ionicons} from '@expo/vector-icons'; 
+import React, {useState, useEffect, createContext} from "react";
+import {Platform, Dimensions, StatusBar, StyleSheet, SafeAreaView, Text} from "react-native";
+import {Button, TextInput, IconButton} from "@react-native-material/core";
+import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
+import {MaterialCommunityIcons, Ionicons} from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import TemplatePage from "./TemplatePage.js";
+import SettingsPage from "./SettingsPage.js";
+import {dbClient} from "../comps/DBClient";
+import SiteContext from "../comps/SiteContext.js"
 
-import TemplatePage from './TemplatePage.js';
-import SettingsPage from './SettingsPage.js';
-
-const {width} = Dimensions.get('window');
-const {height} = Dimensions.get('window');
-
-const HomePage = ({navigation}) => {
-  // const [loggedIn, setLoggedIn] = useState('yes');
-
+const HomePage = ({route}) => {
+  const [siteId, setSiteId] = useState('0');
+  const [siteInfo, setSiteInfo] = useState({});
   const Tab = createBottomTabNavigator();
 
-  // const storeLoggedIn = async (storedValue) => {
-  //   try {
-  //     await AsyncStorage.setItem('isLoggedIn', storedValue);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  useEffect(() => {
+    AsyncStorage.getItem("site_id").then((value) => {
+      setSiteId(value);
+    });
+  }, []);
+
+  useEffect(() => {
+    const getItem = async () => {
+      const params = {
+        TableName: 'sites',
+        Key: {
+          site_id: {S: siteId}
+        },
+      };
+      dbClient.getItem(params, (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          setSiteInfo(data.Item);
+        }
+      });
+    }
+    getItem();
+  }, [siteId]);
 
   return (
-    <Tab.Navigator screenOptions = {({route}) => ({
-      tabBarActiveTintColor: 'mediumseagreen',
-      tabBarIcon: ({focused, color, size}) => {
-        let iconName;
-        if (route.name === 'Users') {
-          if (focused){
-            return <Ionicons name = 'md-people' size = {size} color = 'mediumseagreen'/>;
+    <SiteContext.Provider value = {{siteInfo, setSiteInfo}}>
+      <Tab.Navigator initialRouteName = "Residents" screenOptions = {({route}) => ({
+        tabBarActiveTintColor: "crimson", // "#6200ed",
+        tabBarIcon: ({focused, color, size}) => {
+          if (route.name === "Residents") {
+            if (focused) {
+              return <Ionicons name = "md-people" size = {size} color = "crimson"/>;
+            } else {
+              return <Ionicons name = "md-people-outline" size = {size} color = {color}/>;
+            }
+          } else if (route.name === "Alerts") {
+            if (focused) {
+              return <MaterialCommunityIcons name = "bell" size = {size} color = "crimson"/>;
+            } else {
+              return <MaterialCommunityIcons name = "bell-outline" size = {size} color = {color}/>;
+            }
+          } else if (route.name === "Devices") {
+            if (focused) {
+              return <MaterialCommunityIcons name = "smoke-detector" size = {size} color = "crimson"/>;
+            } else {
+              return <MaterialCommunityIcons name = "smoke-detector-outline" size = {size} color = {color}/>;
+            }
           } else {
-            return <Ionicons name = 'md-people-outline' size = {size} color = {color}/>;
+            if (focused) {
+              return <Ionicons name = "settings" size = {size} color = "crimson"/>;
+            } else {
+              return <Ionicons name = "settings-outline" size = {size} color = {color}/>;
+            }
           }
-        } else if (route.name === 'Devices') {
-          if (focused){
-            return <MaterialCommunityIcons name = 'smoke-detector' size = {size} color = 'mediumseagreen'/>;
-          } else {
-            return <MaterialCommunityIcons name = 'smoke-detector-outline' size = {size} color = {color}/>;
-          }
-        } else {
-          if (focused){
-            return <Ionicons name = 'settings' size = {size} color = 'mediumseagreen'/>;
-          } else {
-            return <Ionicons name = 'settings-outline' size = {size} color = {color}/>;
-          }
-        }
-      },
-    })}
-    >
-      <Tab.Screen name = 'Users' component = {TemplatePage}/>
-      <Tab.Screen name = 'Devices' component = {TemplatePage}/>
-      <Tab.Screen name = 'Settings' component = {SettingsPage}/>
-    </Tab.Navigator>
+        },
+      })}>
+        <Tab.Screen name = "Residents" component = {TemplatePage}/>
+        <Tab.Screen name = "Alerts" component = {TemplatePage}/>
+        <Tab.Screen name = "Devices" component = {TemplatePage}/>
+        <Tab.Screen name = "Settings" component = {SettingsPage} initialParams = {route.params}/>
+      </Tab.Navigator>
+    </SiteContext.Provider>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    alignItems: 'center',
-  },
-  centeredStack: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 export default HomePage;
