@@ -1,21 +1,35 @@
-import React, {useContext} from "react";
-import {Alert, Dimensions, StyleSheet, View, ScrollView, Text} from "react-native";
-import {Button, TextInput, Divider} from "@react-native-material/core";
-import {Stack} from "react-native-flex-layout";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useContext } from "react";
+import {
+  Alert,
+  Dimensions,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  View,
+  SafeAreaView,
+  ScrollView,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from "react-native";
+import { Button } from "@react-native-material/core";
+import { Text, Divider } from "react-native-paper";
+import { Stack } from "react-native-flex-layout";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SiteContext from "../comps/SiteContext";
 
-const {width} = Dimensions.get("window");
-const {height} = Dimensions.get("window");
+const { width } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
-function SettingsPage({navigation, route}) {
-  const {siteInfo, setSiteInfo} = useContext(SiteContext);
+function SettingsPage({ navigation, route }) {
+  const { siteId, setSiteId } = useContext(SiteContext);
+  const { siteName, setSiteName } = useContext(SiteContext);
 
   const handlePress = async () => {
     const keys = await AsyncStorage.getAllKeys();
     const values = await AsyncStorage.multiGet(keys);
-    console.log(values);
-    console.log(siteInfo);
+    console.log("Storage: ", values);
+    console.log("Site ID: ", siteId);
+    console.log("Site Name: ", siteName);
   };
 
   // const handleDelete = async () => {
@@ -23,52 +37,117 @@ function SettingsPage({navigation, route}) {
   // };
 
   return (
-    <View style={styles.centered}>
-      <ScrollView>
-        <Stack style={styles.centeredStack} direction="column" spacing={height * 0.03}>
-          <Text style={{ color: "dimgray", alignSelf: "flex-start", fontSize: 16}}>Site: {siteInfo["site_name"].S}</Text>
-          {/* <Text style={{ color: "dimgray", alignSelf: "flex-start", fontSize: 16}}>{siteInfo["site_"].S}</Text>
-          <Text style={{ color: "dimgray", alignSelf: "flex-start", fontSize: 16}}>{siteInfo["site_name"].S}</Text>
-          <Text style={{ color: "dimgray", alignSelf: "flex-start", fontSize: 16}}>{siteInfo["site_name"].S}</Text> */}
-          
-          
-          <Divider style={{ width: width * 0.9 }} color="lightgray"/>
-          <Text style={{ color: "dimgray", alignSelf: "flex-start", fontSize: 16}}>Press below to leave this site</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle={"dark-content"} />
+      <ScrollView style={{ backgroundColor: "whitesmoke" }}>
+        <Stack
+          style={styles.centered}
+          direction="column"
+          spacing={height * 0.03}
+        >
+          <Text
+            style={{
+              color: "black",
+              alignSelf: "flex-start",
+              fontWeight: "bold",
+              fontSize: 18,
+            }}
+          >
+            Site Name:
+          </Text>
+          <Text
+            style={{ color: "dimgray", textAlign: "center" }}
+            variant="headlineLarge"
+          >
+            {siteName}
+          </Text>
+          <Divider style={{ width: width * 0.9 }} bold={true} />
+          <Text
+            style={{
+              color: "black",
+              alignSelf: "flex-start",
+              fontWeight: "bold",
+              fontSize: 18,
+            }}
+          >
+            Leave Site:
+          </Text>
+          <Text
+            style={{ color: "dimgray", textAlign: "center" }}
+            variant="bodyMedium"
+          >
+            You can always rejoin a site with the unique Site Code or the QR
+            Code.
+          </Text>
           <Button
-            style={{width: width * 0.75, borderWidth: 1, borderColor: "red"}}
-            variant = "outlined"
-            title = "Leave Site"
-            color = "red"
-            onPress = {() => {
-              Alert.alert("Leave Site", "Are you sure you would like to leave the site? You will have to join the site with the Site Code once again", [
-                {text: "Yes", style: "destructive", onPress: () => {AsyncStorage.setItem("site_id", "0"); navigation.navigate("JoinSite")}},
-                {text: "No" },
-              ])}}/>
-          <Divider style={{ width: width * 0.9 }} color="lightgray"/>
+            style={{
+              width: width * 0.75,
+              borderWidth: 1,
+              borderColor: "red",
+            }}
+            variant="outlined"
+            title="Leave Site"
+            color="red"
+            onPress={() => {
+              Alert.alert(
+                "Leave Site",
+                "Are you sure you would like to leave the site?",
+                [
+                  {
+                    text: "Yes",
+                    style: "destructive",
+                    onPress: () => {
+                      AsyncStorage.setItem("site_id", "0");
+                      setSiteId("0");
+                      setSiteName(null);
+                      navigation.navigate("JoinSite");
+                    },
+                  },
+                  { text: "No" },
+                ]
+              );
+            }}
+          />
+          <Divider style={{ width: width * 0.9 }} bold={true} />
+          <Text
+            style={{
+              color: "black",
+              alignSelf: "flex-start",
+              fontWeight: "bold",
+              fontSize: 18,
+            }}
+          >
+            Debug Options:
+          </Text>
           <Button
-            style={{width: width * 0.75, borderWidth: 1, borderColor: "blue"}}
-            variant = "outlined"
-            title = "Show Storage"
-            color = "blue"
-            onPress = {handlePress}/>
-          {/* <Button title = "Debug Delete" onPress={handleDelete}/> */}
+            style={{ width: width * 0.75, borderWidth: 1, borderColor: "blue" }}
+            variant="outlined"
+            title="Show Vars"
+            color="blue"
+            onPress={handlePress}
+          />
         </Stack>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-    centered: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    centeredStack: {
-      alignItems: "center",
-      justifyContent: "center",
-      paddingTop: height * 0.04,
-    }
-  });
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: height * 0.015,
+    paddingLeft: width * 0.05,
+    paddingRight: width * 0.05,
+  },
+});
 
 export default SettingsPage;
