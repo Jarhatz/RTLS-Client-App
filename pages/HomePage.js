@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import SiteContext from "../comps/SiteContext.js";
+import { dbClient } from "../comps/DBClient";
 import TemplatePage from "./TemplatePage.js";
 import ResidentsPage from "./ResidentsPage.js";
+import AddResidentPage from "./AddResidentsPage.js";
 import SettingsPage from "./SettingsPage.js";
-import { dbClient } from "../comps/DBClient";
-import SiteContext from "../comps/SiteContext.js";
+
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 function HomePage() {
   const navigation = useNavigation();
   const [siteId, setSiteId] = useState("0");
   const [siteName, setSiteName] = useState(null);
-  const Tab = createBottomTabNavigator();
 
   useEffect(() => {
     AsyncStorage.getItem("site_id").then((value) => {
@@ -126,12 +129,38 @@ function HomePage() {
           },
         })}
       >
-        <Tab.Screen name="Residents" component={ResidentsPage} />
+        <Tab.Screen name="Residents" component={ResidentsStack} />
         <Tab.Screen name="Alerts" component={TemplatePage} />
         <Tab.Screen name="Devices" component={TemplatePage} />
         <Tab.Screen name="Settings" component={SettingsPage} />
       </Tab.Navigator>
     </SiteContext.Provider>
+  );
+}
+
+function ResidentsStack() {
+  const navigation = useNavigation();
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      navigation.navigate("HomeResidents");
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  return (
+    <Stack.Navigator
+      initialRouteName="HomeResidents"
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: false,
+        gestureDirection: "horizontal",
+      }}
+    >
+      <Stack.Screen name="HomeResidents" component={ResidentsPage} />
+      <Stack.Screen name="AddResident" component={AddResidentPage} />
+    </Stack.Navigator>
   );
 }
 

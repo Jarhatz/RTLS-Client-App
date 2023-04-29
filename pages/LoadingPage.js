@@ -1,10 +1,11 @@
-import React from 'react';
-import {StyleSheet, View, Text} from 'react-native';
+import React from "react";
+import { StyleSheet, View, Text } from "react-native";
+import { ActivityIndicator } from "@react-native-material/core";
 
 const LoadingPage = () => {
   return (
-    <View style = {styles.container}>
-      <Text>Loading...</Text>
+    <View style={styles.container}>
+      <ActivityIndicator animating={true} color="crimson" />
     </View>
   );
 };
@@ -21,6 +22,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  });
+});
 
 export default LoadingPage;

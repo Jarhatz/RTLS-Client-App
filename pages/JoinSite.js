@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Alert,
   Dimensions,
   Platform,
   StatusBar,
@@ -8,11 +7,10 @@ import {
   View,
   SafeAreaView,
   Keyboard,
-  Text,
   TouchableWithoutFeedback,
 } from "react-native";
 import { Button, TextInput } from "@react-native-material/core";
-import { IconButton } from "react-native-paper";
+import { Text, IconButton, Dialog, Portal } from "react-native-paper";
 import { Stack } from "react-native-flex-layout";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -28,6 +26,9 @@ const JoinSitePage = () => {
   const [cameraPermission, setCameraPermission] = useState(null);
   const [scanned, setScanned] = useState(true);
   const [siteCodeInput, setSiteCodeInput] = useState("");
+  const [visibleDialog1, setVisibleDialog1] = useState(false);
+  const [visibleDialog2, setVisibleDialog2] = useState(false);
+  const [visibleDialog3, setVisibleDialog3] = useState(false);
 
   useEffect(() => {
     getCameraPermission();
@@ -68,6 +69,26 @@ const JoinSitePage = () => {
     }
   };
 
+  const showDialog = (dialogType) => {
+    if (dialogType === 1) {
+      setVisibleDialog1(true);
+    } else if (dialogType === 2) {
+      setVisibleDialog2(true);
+    } else {
+      setVisibleDialog3(true);
+    }
+  };
+
+  const hideDialog = (dialogType) => {
+    if (dialogType === 1) {
+      setVisibleDialog1(false);
+    } else if (dialogType === 2) {
+      setVisibleDialog2(false);
+    } else {
+      setVisibleDialog3(false);
+    }
+  };
+
   const handleSubmitBtn = async () => {
     Keyboard.dismiss();
     if (siteCodeInput.length >= 4) {
@@ -77,14 +98,10 @@ const JoinSitePage = () => {
         AsyncStorage.setItem("site_id", items[0]["site_id"].S);
         navigation.navigate("HomePage");
       } else {
-        Alert.alert("Code Failed", "Invalid site code. Please try again", [
-          { text: "OK" },
-        ]);
+        showDialog(1);
       }
     } else {
-      Alert.alert("Code Failed", "Invalid site code length. Please try again", [
-        { text: "OK" },
-      ]);
+      showDialog(2);
     }
   };
 
@@ -92,9 +109,7 @@ const JoinSitePage = () => {
   const handleQRCodeScanned = async ({ type, data }) => {
     setScanned(true);
     if (data.length !== 64) {
-      Alert.alert("Scan Failed", "Invalid QR code. Please try again", [
-        { text: "OK" },
-      ]);
+      showDialog(3);
     } else {
       const items = await checkCode(data, 1);
       if (items.length) {
@@ -102,9 +117,7 @@ const JoinSitePage = () => {
         AsyncStorage.setItem("site_id", items[0]["site_id"].S);
         navigation.navigate("HomePage");
       } else {
-        Alert.alert("Scan Failed", "Invalid QR code. Please try again", [
-          { text: "OK" },
-        ]);
+        showDialog(3);
       }
       siteCode = data.substring(10);
     }
@@ -133,7 +146,7 @@ const JoinSitePage = () => {
               label="Site Code"
               color="crimson"
               value={siteCodeInput}
-              keyboardType="numeric"
+              keyboardType="name-phone-pad"
               leading={(props) => (
                 <MaterialCommunityIcons
                   name="office-building-cog-outline"
@@ -191,20 +204,12 @@ const JoinSitePage = () => {
                 onBarCodeScanned={scanned ? undefined : handleQRCodeScanned}
               />
             </View>
-            {cameraPermission ? (
-              <Button
-                style={{ width: width * 0.5 }}
-                title="Scan"
-                color="crimson"
-                onPress={() => setScanned(false)}
-              />
-            ) : (
-              <Button
-                style={{ width: width * 0.5 }}
-                title="Rescan"
-                color="crimson"
-              />
-            )}
+            <Button
+              style={{ width: width * 0.5 }}
+              title="Scan"
+              color="crimson"
+              onPress={() => setScanned(false)}
+            />
             <Text
               style={{
                 fontSize: 14,
@@ -213,7 +218,73 @@ const JoinSitePage = () => {
               *Every site has a scannable QR Code
             </Text>
           </Stack>
-          {/* <Button title = "Show Storage" onPress={handlePress}/> */}
+          <Portal>
+            <Dialog
+              style={{ backgroundColor: "whitesmoke" }}
+              visible={visibleDialog1}
+              onDismiss={() => hideDialog(1)}
+            >
+              <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+                Code Failed
+              </Dialog.Title>
+              <Dialog.Content>
+                <Text variant="bodyMedium">
+                  Invalid site code. Please make sure the site code is correct.
+                </Text>
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button
+                  title="OK"
+                  color="crimson"
+                  onPress={() => hideDialog(1)}
+                />
+              </Dialog.Actions>
+            </Dialog>
+            <Dialog
+              style={{ backgroundColor: "whitesmoke" }}
+              visible={visibleDialog2}
+              onDismiss={() => hideDialog(2)}
+            >
+              <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+                Code Failed
+              </Dialog.Title>
+              <Dialog.Content>
+                <Text variant="bodyMedium">
+                  Invalid site code length. Please make sure the site code
+                  length is greater than 3 digits.
+                </Text>
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button
+                  title="OK"
+                  color="crimson"
+                  onPress={() => hideDialog(2)}
+                />
+              </Dialog.Actions>
+            </Dialog>
+            <Dialog
+              style={{ backgroundColor: "whitesmoke" }}
+              visible={visibleDialog3}
+              onDismiss={() => hideDialog(3)}
+            >
+              <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+                Scan Failed
+              </Dialog.Title>
+              <Dialog.Content>
+                <Text variant="bodyMedium">
+                  Invalid QR code. Please make sure the site's QR code is in the
+                  camera's view box.
+                </Text>
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button
+                  title="OK"
+                  color="crimson"
+                  onPress={() => hideDialog(3)}
+                />
+              </Dialog.Actions>
+            </Dialog>
+          </Portal>
         </Stack>
       </TouchableWithoutFeedback>
     </SafeAreaView>
