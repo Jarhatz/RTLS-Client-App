@@ -10,7 +10,7 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-./comps/DBClient.js
+.comps/DBClient.js
 
 # macOS
 .DS_Store

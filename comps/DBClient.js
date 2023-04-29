@@ -5,7 +5,7 @@ import { DynamoDB } from "@aws-sdk/client-dynamodb";
 export const dbClient = new DynamoDB({
   region: "us-west-2",
   credentials: {
-    accessKeyId: "",
-    secretAccessKey: "",
+    accessKeyId: "ACCESS_KEY",
+    secretAccessKey: "SECRET_KEY",
   },
 });
