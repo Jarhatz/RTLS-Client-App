@@ -146,7 +146,7 @@ const JoinSitePage = () => {
               label="Site Code"
               color="crimson"
               value={siteCodeInput}
-              keyboardType="name-phone-pad"
+              keyboardType="number-pad"
               leading={(props) => (
                 <MaterialCommunityIcons
                   name="office-building-cog-outline"

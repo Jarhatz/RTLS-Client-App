@@ -20,7 +20,6 @@ import {
   ActivityIndicator,
   Text,
   IconButton,
-  Card,
   Dialog,
   Portal,
   DataTable,
@@ -39,25 +38,154 @@ function AddResidentPage({ navigation }) {
   const tagIdImage = require("../images/tag-id-dialog.jpg");
   const [residentName, setResidentName] = useState("");
   const [residentTag, setResidentTag] = useState("");
+  const [loading, setLoading] = useState(false);
   const [visibleDialog1, setVisibleDialog1] = useState(false);
   const [visibleDialog2, setVisibleDialog2] = useState(false);
   const [visibleDialog3, setVisibleDialog3] = useState(false);
+  const [visibleDialog4, setVisibleDialog4] = useState(false);
+  let response1 = false;
+  let response2 = false;
+  let response3 = false;
+  let response4 = false;
 
-  const handleSubmitBtn = async () => {};
-
-  const handleAddBtn = () => {
-    Keyboard.dismiss();
-    console.log(siteId);
-    console.log(siteName);
-    if (residentName.length == 0) {
-      showDialog(2);
-    } else {
-      console.log("Added User!");
+  const handleNavigate = () => {
+    if (
+      (response2 && response3 && response4) ||
+      (response3 && response4) ||
+      response1
+    ) {
+      setLoading(false);
+      navigation.navigate("HomeResidents");
     }
   };
 
-  const handleBackBtn = () => {
-    navigation.navigate("HomeResidents");
+  const handleAddBtn = async () => {
+    Keyboard.dismiss();
+    setLoading(true);
+    if (residentName.length < 4) {
+      setLoading(false);
+      showDialog(2); // Invalid Resident Name
+    } else {
+      const getResidentParams = {
+        TableName: "sites_" + siteId + "_residents",
+        Key: {
+          res_name: { S: residentName.toUpperCase() },
+        },
+      };
+      try {
+        const getResidentResponse = await dbClient.getItem(getResidentParams);
+        if (getResidentResponse.Item === undefined) {
+          if (residentTag.length === 0) {
+            // RESIDENT NAME ONLY PROVIDED
+            const putResidentParams = {
+              TableName: "sites_" + siteId + "_residents",
+              Item: {
+                res_name: { S: residentName.toUpperCase() },
+                res_tag: { S: "" },
+                location: { L: [] },
+                sos: { S: "0" },
+              },
+            };
+            try {
+              const putResidentResponse = await dbClient.putItem(
+                putResidentParams
+              );
+              response1 = true;
+              handleNavigate();
+            } catch (error) {
+              console.error(error);
+            }
+          } else {
+            // RESIDENT NAME PROVIDED WITH TAG ID
+            const resTag =
+              "SITE_" + siteId + "_TAG_" + residentTag.toUpperCase();
+            const getTagParams = {
+              TableName: "sites_" + siteId + "_tags",
+              Key: {
+                tag_id: {
+                  S: resTag,
+                },
+              },
+            };
+            try {
+              const getTagResponse = await dbClient.getItem(getTagParams);
+              if (getTagResponse.Item === undefined) {
+                setLoading(false);
+                showDialog(4); // Invalid Tag ID
+              } else {
+                if (getTagResponse.Item["res_name"].S !== "") {
+                  const updateResidentParams = {
+                    TableName: "sites_" + siteId + "_residents",
+                    Key: {
+                      res_name: { S: getTagResponse.Item["res_name"].S },
+                    },
+                    UpdateExpression: "SET res_tag = :value1",
+                    ExpressionAttributeValues: {
+                      ":value1": { S: "" },
+                    },
+                    ReturnValues: "ALL_NEW",
+                  };
+                  try {
+                    const updateResidentResponse = await dbClient.updateItem(
+                      updateResidentParams
+                    );
+                    response2 = true;
+                  } catch (error) {
+                    console.error(error);
+                  }
+                }
+                const putResidentParams = {
+                  TableName: "sites_" + siteId + "_residents",
+                  Item: {
+                    res_name: { S: residentName.toUpperCase() },
+                    res_tag: { S: resTag },
+                    location: { L: [] },
+                    sos: { S: "0" },
+                  },
+                };
+                try {
+                  const putResidentResponse = await dbClient.putItem(
+                    putResidentParams
+                  );
+                  response3 = true;
+                } catch (error) {
+                  console.error(error);
+                }
+                const updateTagParams = {
+                  TableName: "sites_" + siteId + "_tags",
+                  Key: {
+                    tag_id: {
+                      S: resTag,
+                    },
+                  },
+                  UpdateExpression: "SET res_name = :value1",
+                  ExpressionAttributeValues: {
+                    ":value1": { S: residentName.toUpperCase() },
+                  },
+                  ReturnValues: "ALL_NEW",
+                };
+                try {
+                  const updateTagResponse = await dbClient.updateItem(
+                    updateTagParams
+                  );
+                  response4 = true;
+                } catch (error) {
+                  console.error(error);
+                }
+                handleNavigate();
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        } else {
+          setLoading(false);
+          showDialog(3); // Invalid Resident Name
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
   };
 
   const showDialog = (dialogType) => {
@@ -65,8 +193,10 @@ function AddResidentPage({ navigation }) {
       setVisibleDialog1(true);
     } else if (dialogType === 2) {
       setVisibleDialog2(true);
-    } else {
+    } else if (dialogType === 3) {
       setVisibleDialog3(true);
+    } else {
+      setVisibleDialog4(true);
     }
   };
 
@@ -75,8 +205,10 @@ function AddResidentPage({ navigation }) {
       setVisibleDialog1(false);
     } else if (dialogType === 2) {
       setVisibleDialog2(false);
-    } else {
+    } else if (dialogType === 3) {
       setVisibleDialog3(false);
+    } else {
+      setVisibleDialog4(false);
     }
   };
 
@@ -145,6 +277,7 @@ function AddResidentPage({ navigation }) {
                       style={{ width: width * 0.4 }}
                       label="Tag ID"
                       placeholder="----"
+                      maxLength={4}
                       color="crimson"
                       variant="standard"
                       leading={(props) => (
@@ -201,7 +334,9 @@ function AddResidentPage({ navigation }) {
                 direction="row"
                 spacing={width * 0.1}
               >
-                <TouchableOpacity onPress={handleBackBtn}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("HomeResidents")}
+                >
                   <View>
                     <Button
                       style={{
@@ -220,7 +355,7 @@ function AddResidentPage({ navigation }) {
                       leading={(props) => (
                         <Ionicons name="arrow-back" size={24} color="crimson" />
                       )}
-                      onPress={handleBackBtn}
+                      onPress={() => navigation.navigate("HomeResidents")}
                     />
                   </View>
                 </TouchableOpacity>
@@ -249,7 +384,6 @@ function AddResidentPage({ navigation }) {
               </Stack>
             </Stack>
             <Portal>
-              {/* <ActivityIndicator animating={true} color="crimson" /> */}
               <Dialog
                 style={{ backgroundColor: "white" }}
                 visible={visibleDialog1}
@@ -275,7 +409,7 @@ function AddResidentPage({ navigation }) {
                     </Text>
                     <Image
                       source={tagIdImage}
-                      style={{ width: 200, height: 200 }}
+                      style={{ width: width / 2, height: width / 2 }}
                     />
                     <Text style={{ fontWeight: "bold" }} variant="labelLarge">
                       {"\n"}You can find the Tag ID on the back of the tag
@@ -291,14 +425,16 @@ function AddResidentPage({ navigation }) {
                 onDismiss={() => hideDialog(2)}
               >
                 <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
-                  Invalid Name
+                  Invalid Resident Name
                 </Dialog.Title>
                 <Dialog.Content>
                   <Text variant="bodyMedium">
-                    Please enter a name for the resident you wish to add.
+                    Please enter a full name for the resident you wish to add.
+                    The name you added is two short.
+                    {"\n"}
                   </Text>
                   <Text style={{ fontWeight: "bold" }} variant="labelLarge">
-                    [Firstname Lastname]
+                    Resident: [{residentName.toUpperCase()}]
                   </Text>
                 </Dialog.Content>
                 <Dialog.Actions>
@@ -309,6 +445,67 @@ function AddResidentPage({ navigation }) {
                   />
                 </Dialog.Actions>
               </Dialog>
+              <Dialog
+                style={{ backgroundColor: "white" }}
+                visible={visibleDialog3}
+                onDismiss={() => hideDialog(3)}
+              >
+                <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+                  Invalid Resident Name
+                </Dialog.Title>
+                <Dialog.Content>
+                  <Text variant="bodyMedium">
+                    The resident name you have entered already exists. Please
+                    add a new name or edit the existing user.{"\n"}
+                  </Text>
+                  <Text style={{ fontWeight: "bold" }} variant="labelLarge">
+                    Resident: [{residentName.toUpperCase()}]
+                  </Text>
+                </Dialog.Content>
+                <Dialog.Actions>
+                  <Button
+                    title="OK"
+                    color="crimson"
+                    onPress={() => hideDialog(3)}
+                  />
+                </Dialog.Actions>
+              </Dialog>
+              <Dialog
+                style={{ backgroundColor: "white" }}
+                visible={visibleDialog4}
+                onDismiss={() => hideDialog(4)}
+              >
+                <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+                  Invalid Tag ID
+                </Dialog.Title>
+                <Dialog.Content>
+                  <Text variant="bodyMedium">
+                    The tag ID you have entered does not exist. Please enter a
+                    valid Tag ID to pair it to a new resident.{"\n"}
+                  </Text>
+                  <Text style={{ fontWeight: "bold" }} variant="labelLarge">
+                    Tag ID: [{residentTag.toUpperCase()}]
+                  </Text>
+                </Dialog.Content>
+                <Dialog.Actions>
+                  <Button
+                    title="OK"
+                    color="crimson"
+                    onPress={() => hideDialog(4)}
+                  />
+                </Dialog.Actions>
+              </Dialog>
+              <ActivityIndicator
+                style={{
+                  flex: 1,
+                  alignSelf: "center",
+                  width: width * 0.01,
+                  height: width * 0.01,
+                }}
+                color="crimson"
+                size="large"
+                animating={loading}
+              />
             </Portal>
           </View>
         </KeyboardAvoidingView>
@@ -343,8 +540,14 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     borderRadius: 10,
     backgroundColor: "white",
-    borderColor: "lightgray",
-    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    elevation: 5,
   },
   addBoxInsideStyle: {
     paddingTop: height * 0.025,

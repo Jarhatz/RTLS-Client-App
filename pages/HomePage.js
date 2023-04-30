@@ -154,7 +154,7 @@ function ResidentsStack() {
       initialRouteName="HomeResidents"
       screenOptions={{
         headerShown: false,
-        gestureEnabled: false,
+        gestureEnabled: true,
         gestureDirection: "horizontal",
       }}
     >
