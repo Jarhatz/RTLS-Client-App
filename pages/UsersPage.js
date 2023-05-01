@@ -36,28 +36,34 @@ import { dbClient } from "../comps/DBClient";
 const { width } = Dimensions.get("window");
 const { height } = Dimensions.get("window");
 
-function ResidentsPage({ navigation }) {
+function UsersPage({ navigation }) {
   const { siteId, setSiteId } = useContext(SiteContext);
   const { siteName, setSiteName } = useContext(SiteContext);
-  const [residentSearchName, setResidentSearchName] = useState("");
-  const [scannedResidents, setScannedResidents] = useState(null);
+  const [userSearchName, setUserSearchName] = useState("");
+  const [scannedUsers, setScannedUsers] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
-      scanResidents();
+      scanUsers();
       return () => {
-        setScannedResidents(null);
+        setScannedUsers(null);
       };
     }, [siteId])
   );
 
-  const scanResidents = async () => {
+  const scanUsers = async () => {
     const params = {
-      TableName: "sites_" + siteId + "_residents",
+      TableName: "sites_" + siteId + "_users",
     };
     try {
       const response = await dbClient.scan(params);
-      setScannedResidents(response.Items);
+      const items = response.Items;
+      items.sort((a, b) => {
+        if (b.alert.S !== a.alert.S) return b.alert.S - a.alert.S;
+        if (b.user_tag.S !== a.user_tag.S) return b.user_tag.S ? 1 : -1;
+        return a.user_name.S.localeCompare(b.user_name.S);
+      });
+      setScannedUsers(items);
     } catch (error) {
       console.log(error);
     }
@@ -65,15 +71,11 @@ function ResidentsPage({ navigation }) {
 
   const handleSearchBtn = () => {
     Keyboard.dismiss();
-    console.log("Search: ", residentSearchName);
-    setResidentSearchName("");
+    console.log("Search: ", userSearchName);
+    setUserSearchName("");
   };
 
-  const handleAddResidentBtn = () => {
-    navigation.navigate("AddResident");
-  };
-
-  const formatResidentName = (name) => {
+  const formatUserName = (name) => {
     const spaceIndex = name.indexOf(" ");
     if (spaceIndex < 0) {
       return name[0] + name.substring(1, name.length).toLowerCase();
@@ -88,16 +90,11 @@ function ResidentsPage({ navigation }) {
     }
   };
 
-  const formatResidentTag = (tagId) => {
-    if (tagId === "") {
-      return "#0000 - ";
-    } else {
-      const tagIdIndex = tagId.indexOf("_TAG_") + 5;
-      return "#" + tagId.substring(tagIdIndex, tagId.length) + " - ";
-    }
+  const showLocations = (locations) => {
+    return JSON.stringify(locations);
   };
 
-  const scannedResidentView = (resident, id) => {
+  const scannedUserView = (user, id) => {
     return (
       <Box style={styles.userBoxStyle} key={id}>
         <Stack
@@ -110,20 +107,34 @@ function ResidentsPage({ navigation }) {
             direction="row"
           >
             <Text>
-              <Text
-                style={{ color: "gray", fontStyle: "italic" }}
-                variant="titleMedium"
-              >
-                {formatResidentTag(resident.res_tag.S)}
-              </Text>
+              {user.user_tag.S === "" ? (
+                <Text
+                  style={{ color: "gray", fontStyle: "italic" }}
+                  variant="titleMedium"
+                >
+                  #0000 -{" "}
+                </Text>
+              ) : (
+                <Text
+                  style={{ color: "royalblue", fontStyle: "italic" }}
+                  variant="titleMedium"
+                >
+                  #
+                  {user.user_tag.S.substring(
+                    user.user_tag.S.indexOf("_TAG_") + 5,
+                    user.user_tag.S.length
+                  )}{" "}
+                  -{" "}
+                </Text>
+              )}
               <Text
                 style={{ color: "black", fontWeight: "bold" }}
                 variant="titleMedium"
               >
-                {formatResidentName(resident.res_name.S)}
+                {formatUserName(user.user_name.S)}
               </Text>
             </Text>
-            {resident.res_tag.S === "" ? (
+            {user.user_tag.S === "" ? (
               <MaterialCommunityIcons
                 name="link-off"
                 size={24}
@@ -138,7 +149,11 @@ function ResidentsPage({ navigation }) {
             style={{ alignItems: "center", justifyContent: "space-between" }}
             direction="row"
           >
-            <Stack direction="column" spacing={height * 0.01}>
+            <Stack
+              style={{ width: width * 0.5 }}
+              direction="column"
+              spacing={height * 0.01}
+            >
               <Stack
                 style={{ alignItems: "center" }}
                 direction="row"
@@ -146,12 +161,43 @@ function ResidentsPage({ navigation }) {
               >
                 <MaterialCommunityIcons
                   name="office-building-outline"
-                  size={16}
+                  size={20}
                   color="gray"
                 />
                 <Text style={{ color: "gray" }} variant="titleSmall">
-                  {" " + siteName}
+                  {siteName}
                 </Text>
+              </Stack>
+              <Stack
+                style={{ alignItems: "center" }}
+                direction="row"
+                spacing={width * 0.02}
+              >
+                {user.alert.S === "0" ? (
+                  <MaterialCommunityIcons
+                    name="alert-circle-check-outline"
+                    size={20}
+                    color="green"
+                  />
+                ) : (
+                  <MaterialCommunityIcons
+                    name="alert-circle-outline"
+                    size={20}
+                    color="crimson"
+                  />
+                )}
+                {user.alert.S === "0" ? (
+                  <Text style={{ color: "green" }} variant="titleSmall">
+                    No Alerts
+                  </Text>
+                ) : (
+                  <Text
+                    style={{ color: "crimson", fontWeight: "bold" }}
+                    variant="titleSmall"
+                  >
+                    Alert
+                  </Text>
+                )}
               </Stack>
               <Stack
                 style={{ alignItems: "center" }}
@@ -160,32 +206,52 @@ function ResidentsPage({ navigation }) {
               >
                 <MaterialIcons name="location-pin" size={20} color="gray" />
                 <Text style={{ color: "gray" }} variant="titleSmall">
-                  {JSON.stringify(resident.location)}
+                  {user.location.L.length === 0
+                    ? "Unknown"
+                    : showLocations(user.location.L)}
                 </Text>
               </Stack>
             </Stack>
-            <TouchableOpacity onPress={() => console.log("Edit user!")}>
-              <View>
-                <Button
-                  style={{
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  color="crimson"
-                  loading={true}
-                  loadingIndicator={(props) => (
-                    <MaterialCommunityIcons
-                      name="account-edit"
-                      size={24}
-                      color="white"
-                    />
-                  )}
-                  loadingIndicatorPosition="overlay"
-                  onPress={() => console.log("Edit user!")}
+            <Button
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                borderColor: "royalblue",
+                borderWidth: 1,
+              }}
+              variant="outlined"
+              color="royalblue"
+              loading={true}
+              loadingIndicator={(props) => (
+                <MaterialCommunityIcons
+                  name="account-edit"
+                  size={24}
+                  color="royalblue"
                 />
-              </View>
-            </TouchableOpacity>
+              )}
+              loadingIndicatorPosition="overlay"
+              onPress={() =>
+                navigation.navigate("UsersEdit", {
+                  userName: user.user_name.S,
+                  currentUserTag: user.user_tag.S,
+                })
+              }
+            />
           </Stack>
+          <Divider style={{ width: width * 0.8 }} bold={true} />
+          <Button
+            style={{ width: width * 0.8, alignSelf: "center" }}
+            variant="text"
+            color="royalblue"
+            title="View"
+            trailing={(props) => (
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color="royalblue"
+              />
+            )}
+          />
         </Stack>
       </Box>
     );
@@ -202,11 +268,11 @@ function ResidentsPage({ navigation }) {
                 width: width * 0.7,
                 height: height * 0.0655,
               }}
-              label="Search Resident"
+              label="Search User"
               placeholder="First Last"
-              color="crimson"
+              color="royalblue"
               variant="outlined"
-              value={residentSearchName}
+              value={userSearchName}
               leading={(props) => (
                 <MaterialCommunityIcons
                   name="account-search"
@@ -214,7 +280,7 @@ function ResidentsPage({ navigation }) {
                   color="black"
                 />
               )}
-              onChangeText={(text) => setResidentSearchName(text)}
+              onChangeText={(text) => setUserSearchName(text)}
             />
             <TouchableOpacity onPress={handleSearchBtn}>
               <View>
@@ -225,7 +291,7 @@ function ResidentsPage({ navigation }) {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  color="crimson"
+                  color="royalblue"
                   loading={true}
                   loadingIndicator={(props) => (
                     <Ionicons name="search" size={24} color="white" />
@@ -242,28 +308,27 @@ function ResidentsPage({ navigation }) {
               direction="column"
               spacing={height * 0.02}
             >
-              {scannedResidents ? (
-                scannedResidents.map(scannedResidentView)
+              {scannedUsers ? (
+                scannedUsers.map(scannedUserView)
               ) : (
                 <ActivityIndicator
-                  color="crimson"
+                  color="royalblue"
                   size="large"
                   animating={true}
                 />
               )}
-              {/* <Text>End of ScrollView</Text> */}
             </Stack>
           </ScrollView>
-          <TouchableOpacity onPress={handleAddResidentBtn}>
+          <TouchableOpacity onPress={() => navigation.navigate("UsersAdd")}>
             <View>
               <Button
                 style={styles.addBtnStyle}
-                title="Add Resident"
-                color="crimson"
+                title="Add User"
+                color="royalblue"
                 leading={(props) => (
                   <Ionicons name="person-add-sharp" size={24} color="white" />
                 )}
-                onPress={handleAddResidentBtn}
+                onPress={() => navigation.navigate("UsersAdd")}
               />
             </View>
           </TouchableOpacity>
@@ -322,4 +387,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ResidentsPage;
+export default UsersPage;

@@ -31,13 +31,12 @@ import { dbClient } from "../comps/DBClient";
 
 const { width } = Dimensions.get("window");
 const { height } = Dimensions.get("window");
+const tagIdImage = require("../images/tag-id-dialog.jpg");
 
-function AddResidentPage({ navigation }) {
+function AddUserPage({ navigation }) {
   const { siteId, setSiteId } = useContext(SiteContext);
-  const { siteName, setSiteName } = useContext(SiteContext);
-  const tagIdImage = require("../images/tag-id-dialog.jpg");
-  const [residentName, setResidentName] = useState("");
-  const [residentTag, setResidentTag] = useState("");
+  const [userName, setUserName] = useState("");
+  const [userTag, setUserTag] = useState("");
   const [loading, setLoading] = useState(false);
   const [visibleDialog1, setVisibleDialog1] = useState(false);
   const [visibleDialog2, setVisibleDialog2] = useState(false);
@@ -55,59 +54,56 @@ function AddResidentPage({ navigation }) {
       response1
     ) {
       setLoading(false);
-      navigation.navigate("HomeResidents");
+      navigation.navigate("UsersHome");
     }
   };
 
   const handleAddBtn = async () => {
     Keyboard.dismiss();
     setLoading(true);
-    if (residentName.length < 4) {
+    if (userName.length < 4) {
       setLoading(false);
-      showDialog(2); // Invalid Resident Name
+      showDialog(2); // Invalid User Name
     } else {
-      const getResidentParams = {
-        TableName: "sites_" + siteId + "_residents",
+      const getUserParams = {
+        TableName: "sites_" + siteId + "_users",
         Key: {
-          res_name: {
-            S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+          user_name: {
+            S: userName.toUpperCase().trim().replace(/\s+/g, " "),
           },
         },
       };
       try {
-        const getResidentResponse = await dbClient.getItem(getResidentParams);
-        if (getResidentResponse.Item === undefined) {
-          if (residentTag.length === 0) {
-            // RESIDENT NAME ONLY PROVIDED
-            const putResidentParams = {
-              TableName: "sites_" + siteId + "_residents",
+        const getUserResponse = await dbClient.getItem(getUserParams);
+        if (getUserResponse.Item === undefined) {
+          if (userTag.length === 0) {
+            // USER NAME ONLY PROVIDED
+            const putUserParams = {
+              TableName: "sites_" + siteId + "_users",
               Item: {
-                res_name: {
-                  S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+                user_name: {
+                  S: userName.toUpperCase().trim().replace(/\s+/g, " "),
                 },
-                res_tag: { S: "" },
+                user_tag: { S: "" },
                 location: { L: [] },
                 alert: { S: "0" },
               },
             };
             try {
-              const putResidentResponse = await dbClient.putItem(
-                putResidentParams
-              );
+              const putUserResponse = await dbClient.putItem(putUserParams);
               response1 = true;
               handleNavigate();
             } catch (error) {
               console.error(error);
             }
           } else {
-            // RESIDENT NAME PROVIDED WITH TAG ID
-            const resTag =
-              "SITE_" + siteId + "_TAG_" + residentTag.toUpperCase();
+            // USER NAME PROVIDED WITH TAG ID
+            const tagId = "SITE_" + siteId + "_TAG_" + userTag.toUpperCase();
             const getTagParams = {
               TableName: "sites_" + siteId + "_tags",
               Key: {
                 tag_id: {
-                  S: resTag,
+                  S: tagId,
                 },
               },
             };
@@ -117,42 +113,40 @@ function AddResidentPage({ navigation }) {
                 setLoading(false);
                 showDialog(4); // Invalid Tag ID
               } else {
-                if (getTagResponse.Item["res_name"].S !== "") {
-                  const updateResidentParams = {
-                    TableName: "sites_" + siteId + "_residents",
+                if (getTagResponse.Item["user_name"].S !== "") {
+                  const updateUserParams = {
+                    TableName: "sites_" + siteId + "_users",
                     Key: {
-                      res_name: { S: getTagResponse.Item["res_name"].S },
+                      user_name: { S: getTagResponse.Item["user_name"].S },
                     },
-                    UpdateExpression: "SET res_tag = :value1",
+                    UpdateExpression: "SET user_tag = :value1",
                     ExpressionAttributeValues: {
                       ":value1": { S: "" },
                     },
                     ReturnValues: "ALL_NEW",
                   };
                   try {
-                    const updateResidentResponse = await dbClient.updateItem(
-                      updateResidentParams
+                    const updateUserResponse = await dbClient.updateItem(
+                      updateUserParams
                     );
                     response2 = true;
                   } catch (error) {
                     console.error(error);
                   }
                 }
-                const putResidentParams = {
-                  TableName: "sites_" + siteId + "_residents",
+                const putUserParams = {
+                  TableName: "sites_" + siteId + "_users",
                   Item: {
-                    res_name: {
-                      S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+                    user_name: {
+                      S: userName.toUpperCase().trim().replace(/\s+/g, " "),
                     },
-                    res_tag: { S: resTag },
+                    user_tag: { S: tagId },
                     location: { L: [] },
                     alert: { S: "0" },
                   },
                 };
                 try {
-                  const putResidentResponse = await dbClient.putItem(
-                    putResidentParams
-                  );
+                  const putUserResponse = await dbClient.putItem(putUserParams);
                   response3 = true;
                 } catch (error) {
                   console.error(error);
@@ -161,13 +155,13 @@ function AddResidentPage({ navigation }) {
                   TableName: "sites_" + siteId + "_tags",
                   Key: {
                     tag_id: {
-                      S: resTag,
+                      S: tagId,
                     },
                   },
-                  UpdateExpression: "SET res_name = :value1",
+                  UpdateExpression: "SET user_name = :value1",
                   ExpressionAttributeValues: {
                     ":value1": {
-                      S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+                      S: userName.toUpperCase().trim().replace(/\s+/g, " "),
                     },
                   },
                   ReturnValues: "ALL_NEW",
@@ -188,7 +182,7 @@ function AddResidentPage({ navigation }) {
           }
         } else {
           setLoading(false);
-          showDialog(3); // Invalid Resident Name
+          showDialog(3); // Invalid User Name
         }
       } catch (error) {
         console.error(error);
@@ -240,7 +234,7 @@ function AddResidentPage({ navigation }) {
                 }}
                 variant="headlineLarge"
               >
-                Add Resident
+                Add User
               </Text>
               <Box style={styles.addBoxStyle}>
                 <Stack
@@ -248,20 +242,18 @@ function AddResidentPage({ navigation }) {
                   direction="column"
                   spacing={height * 0.01}
                 >
-                  <Text variant="titleMedium">
-                    Enter the name of the resident:
-                  </Text>
+                  <Text variant="titleMedium">Enter the name of the user:</Text>
                   <TextInput
                     style={{ width: width * 0.8 }}
                     label="Full Name"
                     placeholder="First Last"
-                    color="crimson"
+                    color="royalblue"
                     variant="standard"
                     leading={(props) => (
                       <Ionicons name="person-sharp" size={24} color="black" />
                     )}
-                    value={residentName}
-                    onChangeText={(text) => setResidentName(text)}
+                    value={userName}
+                    onChangeText={(text) => setUserName(text)}
                   />
                   <Text style={{ color: "crimson" }} variant="bodyMedium">
                     *[Required]
@@ -274,9 +266,7 @@ function AddResidentPage({ navigation }) {
                   direction="column"
                   spacing={height * 0.01}
                 >
-                  <Text variant="titleMedium">
-                    Pair a tag for the resident:
-                  </Text>
+                  <Text variant="titleMedium">Pair a tag for the user:</Text>
                   <Stack
                     style={{ justifyContent: "space-between" }}
                     direction="row"
@@ -286,7 +276,7 @@ function AddResidentPage({ navigation }) {
                       label="Tag ID"
                       placeholder="----"
                       maxLength={4}
-                      color="crimson"
+                      color="royalblue"
                       variant="standard"
                       leading={(props) => (
                         <MaterialCommunityIcons
@@ -296,8 +286,8 @@ function AddResidentPage({ navigation }) {
                         />
                       )}
                       keyboardType="name-phone-pad"
-                      value={residentTag}
-                      onChangeText={(text) => setResidentTag(text)}
+                      value={userTag}
+                      onChangeText={(text) => setUserTag(text)}
                     />
                     <TouchableOpacity
                       style={{ alignItems: "center", justifyContent: "center" }}
@@ -310,18 +300,18 @@ function AddResidentPage({ navigation }) {
                         <Button
                           style={{
                             borderWidth: 0,
-                            borderColor: "crimson",
+                            borderColor: "royalblue",
                             alignItems: "center",
                             justifyContent: "center",
                           }}
-                          variant="outlined"
+                          variant="text"
                           title="Tag ID"
-                          color="crimson"
-                          leading={(props) => (
+                          color="royalblue"
+                          trailing={(props) => (
                             <Ionicons
                               name="help-circle-outline"
                               size={24}
-                              color="crimson"
+                              color="royalblue"
                             />
                           )}
                           onPress={() => {
@@ -332,7 +322,7 @@ function AddResidentPage({ navigation }) {
                       </View>
                     </TouchableOpacity>
                   </Stack>
-                  <Text style={{ color: "crimson" }} variant="bodyMedium">
+                  <Text style={{ color: "royalblue" }} variant="bodyMedium">
                     *[Optional] can be paired at any time
                   </Text>
                 </Stack>
@@ -343,7 +333,7 @@ function AddResidentPage({ navigation }) {
                 spacing={width * 0.1}
               >
                 <TouchableOpacity
-                  onPress={() => navigation.navigate("HomeResidents")}
+                  onPress={() => navigation.navigate("UsersHome")}
                 >
                   <View>
                     <Button
@@ -355,15 +345,19 @@ function AddResidentPage({ navigation }) {
                         paddingTop: 10,
                         paddingBottom: 10,
                         borderWidth: 2,
-                        borderColor: "crimson",
+                        borderColor: "royalblue",
                       }}
                       variant="outlined"
                       title="Back"
-                      color="crimson"
+                      color="royalblue"
                       leading={(props) => (
-                        <Ionicons name="arrow-back" size={24} color="crimson" />
+                        <Ionicons
+                          name="arrow-back"
+                          size={24}
+                          color="royalblue"
+                        />
                       )}
-                      onPress={() => navigation.navigate("HomeResidents")}
+                      onPress={() => navigation.navigate("UsersHome")}
                     />
                   </View>
                 </TouchableOpacity>
@@ -377,7 +371,7 @@ function AddResidentPage({ navigation }) {
                         justifyContent: "center",
                       }}
                       title="Add"
-                      color="crimson"
+                      color="royalblue"
                       leading={(props) => (
                         <Ionicons
                           name="person-add-sharp"
@@ -397,7 +391,9 @@ function AddResidentPage({ navigation }) {
                 visible={visibleDialog1}
                 onDismiss={() => hideDialog(1)}
               >
-                <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+                <Dialog.Title
+                  style={{ color: "royalblue", fontWeight: "bold" }}
+                >
                   What is Tag ID?
                 </Dialog.Title>
                 <Dialog.Content>
@@ -410,9 +406,9 @@ function AddResidentPage({ navigation }) {
                   >
                     <Text variant="bodyMedium">
                       The Tag ID is a 4-character field that is used to pair a
-                      tag to a resident to monitor their whereabouts. Tags can
-                      be paired to only one resident at a time. They can also be
-                      updated or added to a resident at any point in time.
+                      tag to a user to monitor their whereabouts. Tags can be
+                      paired to only one user at a time. They can also be
+                      updated or added to a user at any point in time.
                       {"\n"}
                     </Text>
                     <Image
@@ -432,23 +428,25 @@ function AddResidentPage({ navigation }) {
                 visible={visibleDialog2}
                 onDismiss={() => hideDialog(2)}
               >
-                <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
-                  Invalid Resident Name
+                <Dialog.Title
+                  style={{ color: "royalblue", fontWeight: "bold" }}
+                >
+                  Invalid User Name
                 </Dialog.Title>
                 <Dialog.Content>
                   <Text variant="bodyMedium">
-                    Please enter a full name for the resident you wish to add.
-                    The name you added is two short.
+                    Please enter a full name for the user you wish to add. The
+                    name you added is two short.
                     {"\n"}
                   </Text>
                   <Text style={{ fontWeight: "bold" }} variant="labelLarge">
-                    Resident: [{residentName.toUpperCase()}]
+                    User: [{userName.toUpperCase()}]
                   </Text>
                 </Dialog.Content>
                 <Dialog.Actions>
                   <Button
                     title="OK"
-                    color="crimson"
+                    color="royalblue"
                     onPress={() => hideDialog(2)}
                   />
                 </Dialog.Actions>
@@ -458,22 +456,24 @@ function AddResidentPage({ navigation }) {
                 visible={visibleDialog3}
                 onDismiss={() => hideDialog(3)}
               >
-                <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
-                  Invalid Resident Name
+                <Dialog.Title
+                  style={{ color: "royalblue", fontWeight: "bold" }}
+                >
+                  Invalid User Name
                 </Dialog.Title>
                 <Dialog.Content>
                   <Text variant="bodyMedium">
-                    The resident name you have entered already exists. Please
-                    add a new name or edit the existing user.{"\n"}
+                    The user name you have entered already exists. Please add a
+                    new name or edit the existing user.{"\n"}
                   </Text>
                   <Text style={{ fontWeight: "bold" }} variant="labelLarge">
-                    Resident: [{residentName.toUpperCase()}]
+                    User: [{userName.toUpperCase()}]
                   </Text>
                 </Dialog.Content>
                 <Dialog.Actions>
                   <Button
                     title="OK"
-                    color="crimson"
+                    color="royalblue"
                     onPress={() => hideDialog(3)}
                   />
                 </Dialog.Actions>
@@ -483,22 +483,24 @@ function AddResidentPage({ navigation }) {
                 visible={visibleDialog4}
                 onDismiss={() => hideDialog(4)}
               >
-                <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+                <Dialog.Title
+                  style={{ color: "royalblue", fontWeight: "bold" }}
+                >
                   Invalid Tag ID
                 </Dialog.Title>
                 <Dialog.Content>
                   <Text variant="bodyMedium">
                     The Tag ID you have entered does not exist. Please enter a
-                    valid Tag ID to pair it to a new resident.{"\n"}
+                    valid Tag ID to pair it to a new user.{"\n"}
                   </Text>
                   <Text style={{ fontWeight: "bold" }} variant="labelLarge">
-                    Tag ID: [{residentTag.toUpperCase()}]
+                    Tag ID: [{userTag.toUpperCase()}]
                   </Text>
                 </Dialog.Content>
                 <Dialog.Actions>
                   <Button
                     title="OK"
-                    color="crimson"
+                    color="royalblue"
                     onPress={() => hideDialog(4)}
                   />
                 </Dialog.Actions>
@@ -510,7 +512,7 @@ function AddResidentPage({ navigation }) {
                   width: width * 0.01,
                   height: width * 0.01,
                 }}
-                color="crimson"
+                color="royalblue"
                 size="large"
                 animating={loading}
               />
@@ -548,7 +550,7 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     borderRadius: 10,
     backgroundColor: "white",
-    shadowColor: "#000",
+    shadowColor: "black",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -571,4 +573,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddResidentPage;
+export default AddUserPage;

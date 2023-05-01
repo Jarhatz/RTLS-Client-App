@@ -5,7 +5,7 @@ import { ActivityIndicator } from "@react-native-material/core";
 const LoadingPage = () => {
   return (
     <View style={styles.container}>
-      <ActivityIndicator animating={true} color="crimson" />
+      <ActivityIndicator animating={true} color="royalblue" />
     </View>
   );
 };

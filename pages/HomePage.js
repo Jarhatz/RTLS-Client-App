@@ -7,8 +7,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import SiteContext from "../comps/SiteContext.js";
 import { dbClient } from "../comps/DBClient";
 import TemplatePage from "./TemplatePage.js";
-import ResidentsPage from "./ResidentsPage.js";
-import AddResidentPage from "./AddResidentsPage.js";
+import UsersPage from "./UsersPage.js";
+import AddUserPage from "./UsersAddPage.js";
+import EditUserPage from "./UsersEditPage.js";
 import SettingsPage from "./SettingsPage.js";
 
 const Tab = createBottomTabNavigator();
@@ -47,7 +48,7 @@ function HomePage() {
 
   useFocusEffect(
     React.useCallback(() => {
-      navigation.navigate("Residents");
+      navigation.navigate("Users");
       return () => {};
     }, [])
   );
@@ -62,15 +63,15 @@ function HomePage() {
       }}
     >
       <Tab.Navigator
-        initialRouteName="Residents"
+        initialRouteName="Users"
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: "crimson",
+          tabBarActiveTintColor: "royalblue",
           tabBarIcon: ({ focused, color, size }) => {
-            if (route.name === "Residents") {
+            if (route.name === "Users") {
               if (focused) {
                 return (
-                  <Ionicons name="md-people" size={size} color="crimson" />
+                  <Ionicons name="md-people" size={size} color="royalblue" />
                 );
               } else {
                 return (
@@ -81,22 +82,12 @@ function HomePage() {
                   />
                 );
               }
-            } else if (route.name === "Alerts") {
+            } else if (route.name === "Map") {
               if (focused) {
-                return (
-                  <MaterialCommunityIcons
-                    name="bell"
-                    size={size}
-                    color="crimson"
-                  />
-                );
+                return <Ionicons name="map" size={size} color="royalblue" />;
               } else {
                 return (
-                  <MaterialCommunityIcons
-                    name="bell-outline"
-                    size={size}
-                    color={color}
-                  />
+                  <Ionicons name="map-outline" size={size} color={color} />
                 );
               }
             } else if (route.name === "Devices") {
@@ -105,7 +96,7 @@ function HomePage() {
                   <MaterialCommunityIcons
                     name="smoke-detector"
                     size={size}
-                    color="crimson"
+                    color="royalblue"
                   />
                 );
               } else {
@@ -119,7 +110,9 @@ function HomePage() {
               }
             } else {
               if (focused) {
-                return <Ionicons name="settings" size={size} color="crimson" />;
+                return (
+                  <Ionicons name="settings" size={size} color="royalblue" />
+                );
               } else {
                 return (
                   <Ionicons name="settings-outline" size={size} color={color} />
@@ -129,8 +122,8 @@ function HomePage() {
           },
         })}
       >
-        <Tab.Screen name="Residents" component={ResidentsStack} />
-        <Tab.Screen name="Alerts" component={TemplatePage} />
+        <Tab.Screen name="Users" component={UsersStack} />
+        <Tab.Screen name="Map" component={TemplatePage} />
         <Tab.Screen name="Devices" component={TemplatePage} />
         <Tab.Screen name="Settings" component={SettingsPage} />
       </Tab.Navigator>
@@ -138,12 +131,12 @@ function HomePage() {
   );
 }
 
-function ResidentsStack() {
+function UsersStack() {
   const navigation = useNavigation();
 
   React.useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
-      navigation.navigate("HomeResidents");
+      navigation.navigate("UsersHome");
     });
 
     return unsubscribe;
@@ -151,15 +144,16 @@ function ResidentsStack() {
 
   return (
     <Stack.Navigator
-      initialRouteName="HomeResidents"
+      initialRouteName="UsersHome"
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
         gestureDirection: "horizontal",
       }}
     >
-      <Stack.Screen name="HomeResidents" component={ResidentsPage} />
-      <Stack.Screen name="AddResident" component={AddResidentPage} />
+      <Stack.Screen name="UsersHome" component={UsersPage} />
+      <Stack.Screen name="UsersAdd" component={AddUserPage} />
+      <Stack.Screen name="UsersEdit" component={EditUserPage} />
     </Stack.Navigator>
   );
 }

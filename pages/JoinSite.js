@@ -144,7 +144,7 @@ const JoinSitePage = () => {
               style={{ width: width * 0.75 }}
               variant="outlined"
               label="Site Code"
-              color="crimson"
+              color="royalblue"
               value={siteCodeInput}
               keyboardType="number-pad"
               leading={(props) => (
@@ -159,7 +159,7 @@ const JoinSitePage = () => {
             <Button
               style={{ width: width * 0.5 }}
               title="Submit"
-              color="crimson"
+              color="royalblue"
               onPress={handleSubmitBtn}
             />
             <Text
@@ -207,7 +207,7 @@ const JoinSitePage = () => {
             <Button
               style={{ width: width * 0.5 }}
               title="Scan"
-              color="crimson"
+              color="royalblue"
               onPress={() => setScanned(false)}
             />
             <Text
@@ -224,7 +224,7 @@ const JoinSitePage = () => {
               visible={visibleDialog1}
               onDismiss={() => hideDialog(1)}
             >
-              <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+              <Dialog.Title style={{ color: "royalblue", fontWeight: "bold" }}>
                 Code Failed
               </Dialog.Title>
               <Dialog.Content>
@@ -235,7 +235,7 @@ const JoinSitePage = () => {
               <Dialog.Actions>
                 <Button
                   title="OK"
-                  color="crimson"
+                  color="royalblue"
                   onPress={() => hideDialog(1)}
                 />
               </Dialog.Actions>
@@ -245,7 +245,7 @@ const JoinSitePage = () => {
               visible={visibleDialog2}
               onDismiss={() => hideDialog(2)}
             >
-              <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+              <Dialog.Title style={{ color: "royalblue", fontWeight: "bold" }}>
                 Code Failed
               </Dialog.Title>
               <Dialog.Content>
@@ -257,7 +257,7 @@ const JoinSitePage = () => {
               <Dialog.Actions>
                 <Button
                   title="OK"
-                  color="crimson"
+                  color="royalblue"
                   onPress={() => hideDialog(2)}
                 />
               </Dialog.Actions>
@@ -267,7 +267,7 @@ const JoinSitePage = () => {
               visible={visibleDialog3}
               onDismiss={() => hideDialog(3)}
             >
-              <Dialog.Title style={{ color: "crimson", fontWeight: "bold" }}>
+              <Dialog.Title style={{ color: "royalblue", fontWeight: "bold" }}>
                 Scan Failed
               </Dialog.Title>
               <Dialog.Content>
@@ -279,7 +279,7 @@ const JoinSitePage = () => {
               <Dialog.Actions>
                 <Button
                   title="OK"
-                  color="crimson"
+                  color="royalblue"
                   onPress={() => hideDialog(3)}
                 />
               </Dialog.Actions>
