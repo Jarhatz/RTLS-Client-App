@@ -24,7 +24,11 @@ import {
   DataTable,
   Divider,
 } from "react-native-paper";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Ionicons,
+  MaterialIcons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import SiteContext from "../comps/SiteContext";
 import { dbClient } from "../comps/DBClient";
@@ -84,6 +88,15 @@ function ResidentsPage({ navigation }) {
     }
   };
 
+  const formatResidentTag = (tagId) => {
+    if (tagId === "") {
+      return "#0000 - ";
+    } else {
+      const tagIdIndex = tagId.indexOf("_TAG_") + 5;
+      return "#" + tagId.substring(tagIdIndex, tagId.length) + " - ";
+    }
+  };
+
   const scannedResidentView = (resident, id) => {
     return (
       <Box style={styles.userBoxStyle} key={id}>
@@ -96,16 +109,82 @@ function ResidentsPage({ navigation }) {
             style={{ alignItems: "center", justifyContent: "space-between" }}
             direction="row"
           >
-            <Text style={{ fontWeight: "bold" }} variant="titleLarge">
-              {formatResidentName(resident.res_name.S)}
+            <Text>
+              <Text
+                style={{ color: "gray", fontStyle: "italic" }}
+                variant="titleMedium"
+              >
+                {formatResidentTag(resident.res_tag.S)}
+              </Text>
+              <Text
+                style={{ color: "black", fontWeight: "bold" }}
+                variant="titleMedium"
+              >
+                {formatResidentName(resident.res_name.S)}
+              </Text>
             </Text>
-            <IconButton
-              icon="trash-can-outline"
-              iconColor="crimson"
-              size={24}
-              containerColor="white"
-              onPress={() => console.log("Delete User!")}
-            />
+            {resident.res_tag.S === "" ? (
+              <MaterialCommunityIcons
+                name="link-off"
+                size={24}
+                color="crimson"
+              />
+            ) : (
+              <MaterialCommunityIcons name="link" size={24} color="green" />
+            )}
+          </Stack>
+          <Divider style={{ width: width * 0.8 }} bold={true} />
+          <Stack
+            style={{ alignItems: "center", justifyContent: "space-between" }}
+            direction="row"
+          >
+            <Stack direction="column" spacing={height * 0.01}>
+              <Stack
+                style={{ alignItems: "center" }}
+                direction="row"
+                spacing={width * 0.02}
+              >
+                <MaterialCommunityIcons
+                  name="office-building-outline"
+                  size={16}
+                  color="gray"
+                />
+                <Text style={{ color: "gray" }} variant="titleSmall">
+                  {" " + siteName}
+                </Text>
+              </Stack>
+              <Stack
+                style={{ alignItems: "center" }}
+                direction="row"
+                spacing={width * 0.02}
+              >
+                <MaterialIcons name="location-pin" size={20} color="gray" />
+                <Text style={{ color: "gray" }} variant="titleSmall">
+                  {JSON.stringify(resident.location)}
+                </Text>
+              </Stack>
+            </Stack>
+            <TouchableOpacity onPress={() => console.log("Edit user!")}>
+              <View>
+                <Button
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  color="crimson"
+                  loading={true}
+                  loadingIndicator={(props) => (
+                    <MaterialCommunityIcons
+                      name="account-edit"
+                      size={24}
+                      color="white"
+                    />
+                  )}
+                  loadingIndicatorPosition="overlay"
+                  onPress={() => console.log("Edit user!")}
+                />
+              </View>
+            </TouchableOpacity>
           </Stack>
         </Stack>
       </Box>
@@ -119,7 +198,10 @@ function ResidentsPage({ navigation }) {
         <Stack style={styles.centered} direction="column">
           <Stack style={styles.searchBarStyle} direction="row">
             <TextInput
-              style={{ width: width * 0.7, height: height * 0.0655 }}
+              style={{
+                width: width * 0.7,
+                height: height * 0.0655,
+              }}
               label="Search Resident"
               placeholder="First Last"
               color="crimson"
@@ -156,9 +238,9 @@ function ResidentsPage({ navigation }) {
           </Stack>
           <ScrollView style={styles.scrollStackStyle}>
             <Stack
-              style={{ alignItems: "center" }}
+              style={{ alignItems: "center", paddingBottom: height * 0.1 }}
               direction="column"
-              spacing={height * 0.03}
+              spacing={height * 0.02}
             >
               {scannedResidents ? (
                 scannedResidents.map(scannedResidentView)
@@ -169,6 +251,7 @@ function ResidentsPage({ navigation }) {
                   animating={true}
                 />
               )}
+              {/* <Text>End of ScrollView</Text> */}
             </Stack>
           </ScrollView>
           <TouchableOpacity onPress={handleAddResidentBtn}>
@@ -219,7 +302,7 @@ const styles = StyleSheet.create({
   },
   addBtnStyle: {
     width: width * 0.9,
-    height: height * 0.065,
+    height: height * 0.05,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -227,14 +310,8 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     borderRadius: 10,
     backgroundColor: "white",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 2,
-    elevation: 5,
+    borderColor: "lightgray",
+    borderWidth: 1,
   },
   userBoxInsideStyle: {
     paddingTop: height * 0.01,

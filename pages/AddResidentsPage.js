@@ -69,7 +69,9 @@ function AddResidentPage({ navigation }) {
       const getResidentParams = {
         TableName: "sites_" + siteId + "_residents",
         Key: {
-          res_name: { S: residentName.toUpperCase() },
+          res_name: {
+            S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+          },
         },
       };
       try {
@@ -80,10 +82,12 @@ function AddResidentPage({ navigation }) {
             const putResidentParams = {
               TableName: "sites_" + siteId + "_residents",
               Item: {
-                res_name: { S: residentName.toUpperCase() },
+                res_name: {
+                  S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+                },
                 res_tag: { S: "" },
                 location: { L: [] },
-                sos: { S: "0" },
+                alert: { S: "0" },
               },
             };
             try {
@@ -137,10 +141,12 @@ function AddResidentPage({ navigation }) {
                 const putResidentParams = {
                   TableName: "sites_" + siteId + "_residents",
                   Item: {
-                    res_name: { S: residentName.toUpperCase() },
+                    res_name: {
+                      S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+                    },
                     res_tag: { S: resTag },
                     location: { L: [] },
-                    sos: { S: "0" },
+                    alert: { S: "0" },
                   },
                 };
                 try {
@@ -160,7 +166,9 @@ function AddResidentPage({ navigation }) {
                   },
                   UpdateExpression: "SET res_name = :value1",
                   ExpressionAttributeValues: {
-                    ":value1": { S: residentName.toUpperCase() },
+                    ":value1": {
+                      S: residentName.toUpperCase().trim().replace(/\s+/g, " "),
+                    },
                   },
                   ReturnValues: "ALL_NEW",
                 };
@@ -341,7 +349,7 @@ function AddResidentPage({ navigation }) {
                     <Button
                       style={{
                         width: width * 0.4,
-                        height: height * 0.065,
+                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
                         paddingTop: 10,
@@ -364,7 +372,7 @@ function AddResidentPage({ navigation }) {
                     <Button
                       style={{
                         width: width * 0.4,
-                        height: height * 0.065,
+                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
                       }}
@@ -480,7 +488,7 @@ function AddResidentPage({ navigation }) {
                 </Dialog.Title>
                 <Dialog.Content>
                   <Text variant="bodyMedium">
-                    The tag ID you have entered does not exist. Please enter a
+                    The Tag ID you have entered does not exist. Please enter a
                     valid Tag ID to pair it to a new resident.{"\n"}
                   </Text>
                   <Text style={{ fontWeight: "bold" }} variant="labelLarge">
@@ -558,7 +566,6 @@ const styles = StyleSheet.create({
   },
   bottomBtnStyle: {
     width: width * 0.9,
-    height: height * 0.065,
     alignItems: "center",
     justifyContent: "center",
   },
