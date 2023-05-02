@@ -41,22 +41,9 @@ function EditUserPage({ route, navigation }) {
   const [visibleDialog1, setVisibleDialog1] = useState(false);
   const [visibleDialog2, setVisibleDialog2] = useState(false);
   const [visibleDialog3, setVisibleDialog3] = useState(false);
-  const [visibleDialog4, setVisibleDialog4] = useState(false);
   let response1 = false;
   let response2 = false;
   let response3 = false;
-  let response4 = false;
-
-  const handleNavigate = () => {
-    if (
-      (response2 && response3 && response4) ||
-      (response3 && response4) ||
-      response1
-    ) {
-      setLoading(false);
-      navigation.navigate("UsersHome");
-    }
-  };
 
   const formatUserName = (name) => {
     const spaceIndex = name.indexOf(" ");
@@ -78,10 +65,8 @@ function EditUserPage({ route, navigation }) {
       setVisibleDialog1(true);
     } else if (dialogType === 2) {
       setVisibleDialog2(true);
-    } else if (dialogType === 3) {
-      setVisibleDialog3(true);
     } else {
-      setVisibleDialog4(true);
+      setVisibleDialog3(true);
     }
   };
 
@@ -90,10 +75,8 @@ function EditUserPage({ route, navigation }) {
       setVisibleDialog1(false);
     } else if (dialogType === 2) {
       setVisibleDialog2(false);
-    } else if (dialogType === 3) {
-      setVisibleDialog3(false);
     } else {
-      setVisibleDialog4(false);
+      setVisibleDialog3(false);
     }
   };
 
@@ -148,18 +131,110 @@ function EditUserPage({ route, navigation }) {
     setLoading(true);
     if (userTag.length < 4) {
       setLoading(false);
-      showDialog(4);
+      showDialog(3);
     } else {
       tagId = "SITE_" + siteId + "_TAG_" + userTag.toUpperCase();
       if (currentUserTag === tagId) {
         setLoading(false);
-        showDialog(3);
+        showDialog(2);
       } else {
-        console.log("ready to go");
-        if (currentUserTag === "") {
-          // handle case where user doesn't have a paired tag
-        } else {
-          // handle case where user has a paired tag
+        try {
+          const newTagParams = {
+            TableName: "sites_" + siteId + "_tags",
+            Key: {
+              tag_id: { S: tagId },
+            },
+          };
+          const response = await dbClient.getItem(newTagParams);
+          if (response.Item === undefined) {
+            setLoading(false);
+            showDialog(3);
+          } else {
+            if (currentUserTag !== "") {
+              try {
+                const updateOldTagParams = {
+                  TableName: "sites_" + siteId + "_tags",
+                  Key: {
+                    tag_id: { S: currentUserTag },
+                  },
+                  UpdateExpression: "SET user_name = :value1",
+                  ExpressionAttributeValues: {
+                    ":value1": { S: "" },
+                  },
+                  ReturnValues: "ALL_NEW",
+                };
+                const updateOldTagResponse = await dbClient.updateItem(
+                  updateOldTagParams
+                );
+              } catch (error) {
+                console.log(error);
+              }
+            }
+            if (response.Item.user_name.S !== "") {
+              try {
+                const updateOldUserParams = {
+                  TableName: "sites_" + siteId + "_users",
+                  Key: {
+                    user_name: { S: response.Item.user_name.S },
+                  },
+                  UpdateExpression: "SET user_tag = :value1",
+                  ExpressionAttributeValues: {
+                    ":value1": { S: "" },
+                  },
+                  ReturnValues: "ALL_NEW",
+                };
+                const updateOldUserResponse = await dbClient.updateItem(
+                  updateOldUserParams
+                );
+              } catch (error) {
+                console.log(error);
+              }
+            }
+            try {
+              const updateUserParams = {
+                TableName: "sites_" + siteId + "_users",
+                Key: {
+                  user_name: { S: userName },
+                },
+                UpdateExpression: "SET user_tag = :value1",
+                ExpressionAttributeValues: {
+                  ":value1": { S: tagId },
+                },
+                ReturnValues: "ALL_NEW",
+              };
+              const updateUserResponse = await dbClient.updateItem(
+                updateUserParams
+              );
+              response2 = true;
+            } catch (error) {
+              console.log(error);
+            }
+            try {
+              const updateTagParams = {
+                TableName: "sites_" + siteId + "_tags",
+                Key: {
+                  tag_id: { S: tagId },
+                },
+                UpdateExpression: "SET user_name = :value1",
+                ExpressionAttributeValues: {
+                  ":value1": { S: userName },
+                },
+                ReturnValues: "ALL_NEW",
+              };
+              const updateTagResponse = await dbClient.updateItem(
+                updateTagParams
+              );
+              response3 = true;
+            } catch (error) {
+              console.log(error);
+            }
+            if (response2 && response3) {
+              setLoading(false);
+              navigation.navigate("UsersHome");
+            }
+          }
+        } catch (error) {
+          console.log(error);
         }
       }
     }
@@ -345,7 +420,7 @@ function EditUserPage({ route, navigation }) {
                     );
                   }}
                 />
-                <TouchableOpacity>
+                <TouchableOpacity onPress={handleOkBtn}>
                   <View>
                     <Button
                       style={{
@@ -415,16 +490,16 @@ function EditUserPage({ route, navigation }) {
                 <Dialog.Title
                   style={{ color: "royalblue", fontWeight: "bold" }}
                 >
-                  Invalid User Name
+                  Invalid Tag ID
                 </Dialog.Title>
                 <Dialog.Content>
                   <Text variant="bodyMedium">
-                    Please enter a full name for the user you wish to add. The
-                    name you added is two short.
-                    {"\n"}
+                    The Tag ID you entered is the same as the current Tag ID for
+                    this user. Please enter an alternate Tag ID to edit this
+                    user.{"\n"}
                   </Text>
                   <Text style={{ fontWeight: "bold" }} variant="labelLarge">
-                    User: [{userName.toUpperCase()}]
+                    User: [{userTag.toUpperCase()}]
                   </Text>
                 </Dialog.Content>
                 <Dialog.Actions>
@@ -447,34 +522,6 @@ function EditUserPage({ route, navigation }) {
                 </Dialog.Title>
                 <Dialog.Content>
                   <Text variant="bodyMedium">
-                    The Tag ID you entered is the same as the current Tag ID for
-                    this user. Please enter an alternate Tag ID to edit this
-                    user.{"\n"}
-                  </Text>
-                  <Text style={{ fontWeight: "bold" }} variant="labelLarge">
-                    User: [{userTag.toUpperCase()}]
-                  </Text>
-                </Dialog.Content>
-                <Dialog.Actions>
-                  <Button
-                    title="OK"
-                    color="royalblue"
-                    onPress={() => hideDialog(3)}
-                  />
-                </Dialog.Actions>
-              </Dialog>
-              <Dialog
-                style={{ backgroundColor: "white" }}
-                visible={visibleDialog4}
-                onDismiss={() => hideDialog(4)}
-              >
-                <Dialog.Title
-                  style={{ color: "royalblue", fontWeight: "bold" }}
-                >
-                  Invalid Tag ID
-                </Dialog.Title>
-                <Dialog.Content>
-                  <Text variant="bodyMedium">
                     The Tag ID you have entered does not exist. Please enter a
                     valid Tag ID to pair it to a new user.{"\n"}
                   </Text>
@@ -486,7 +533,7 @@ function EditUserPage({ route, navigation }) {
                   <Button
                     title="OK"
                     color="royalblue"
-                    onPress={() => hideDialog(4)}
+                    onPress={() => hideDialog(3)}
                   />
                 </Dialog.Actions>
               </Dialog>

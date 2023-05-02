@@ -14,7 +14,7 @@ import {
   Image,
 } from "react-native";
 import { Stack } from "react-native-flex-layout";
-import { Button, TextInput, Box } from "@react-native-material/core";
+import { Box, Button, TextInput } from "@react-native-material/core";
 import {
   ActivityIndicator,
   Text,
@@ -25,6 +25,7 @@ import {
   Divider,
 } from "react-native-paper";
 import {
+  Feather,
   Ionicons,
   MaterialIcons,
   MaterialCommunityIcons,
@@ -39,14 +40,16 @@ const { height } = Dimensions.get("window");
 function UsersPage({ navigation }) {
   const { siteId, setSiteId } = useContext(SiteContext);
   const { siteName, setSiteName } = useContext(SiteContext);
-  const [userSearchName, setUserSearchName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [scannedUsers, setScannedUsers] = useState(null);
+  const [filteredUsers, setFilteredUsers] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
       scanUsers();
       return () => {
         setScannedUsers(null);
+        setFilteredUsers(null);
       };
     }, [siteId])
   );
@@ -59,20 +62,17 @@ function UsersPage({ navigation }) {
       const response = await dbClient.scan(params);
       const items = response.Items;
       items.sort((a, b) => {
-        if (b.alert.S !== a.alert.S) return b.alert.S - a.alert.S;
-        if (b.user_tag.S !== a.user_tag.S) return b.user_tag.S ? 1 : -1;
-        return a.user_name.S.localeCompare(b.user_name.S);
+        if (a.alert.S > b.alert.S) return -1;
+        if (a.alert.S < b.alert.S) return 1;
+        if (a.user_tag.S !== "" && b.user_tag.S === "") return -1;
+        if (a.user_tag.S === "" && b.user_tag.S !== "") return 1;
+        return a.user_name.S <= b.user_name.S ? -1 : 1;
       });
       setScannedUsers(items);
+      setFilteredUsers(items);
     } catch (error) {
       console.log(error);
     }
-  };
-
-  const handleSearchBtn = () => {
-    Keyboard.dismiss();
-    console.log("Search: ", userSearchName);
-    setUserSearchName("");
   };
 
   const formatUserName = (name) => {
@@ -94,7 +94,29 @@ function UsersPage({ navigation }) {
     return JSON.stringify(locations);
   };
 
-  const scannedUserView = (user, id) => {
+  const handleSearchQuery = (query) => {
+    setSearchQuery(query);
+    if (query === "") {
+      setFilteredUsers(scannedUsers);
+    } else {
+      setFilteredUsers(
+        scannedUsers.filter((user) => {
+          if (user.user_name.S.startsWith(query.toUpperCase())) return true;
+          if (
+            user.user_tag.S !== "" &&
+            user.user_tag.S.substring(
+              user.user_tag.S.length - 4,
+              user.user_tag.S.length
+            ).startsWith(query.toUpperCase())
+          )
+            return true;
+          return false;
+        })
+      );
+    }
+  };
+
+  const scrollUserView = (user, id) => {
     return (
       <Box style={styles.userBoxStyle} key={id}>
         <Stack
@@ -262,54 +284,44 @@ function UsersPage({ navigation }) {
       <StatusBar barStyle={"dark-content"} />
       <View style={{ flex: 1, backgroundColor: "whitesmoke" }}>
         <Stack style={styles.centered} direction="column">
-          <Stack style={styles.searchBarStyle} direction="row">
-            <TextInput
-              style={{
-                width: width * 0.7,
-                height: height * 0.0655,
-              }}
-              label="Search User"
-              placeholder="First Last"
-              color="royalblue"
-              variant="outlined"
-              value={userSearchName}
-              leading={(props) => (
-                <MaterialCommunityIcons
-                  name="account-search"
-                  size={24}
-                  color="black"
-                />
-              )}
-              onChangeText={(text) => setUserSearchName(text)}
-            />
-            <TouchableOpacity onPress={handleSearchBtn}>
-              <View>
-                <Button
-                  style={{
-                    width: width * 0.2,
-                    height: height * 0.0655,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  color="royalblue"
-                  loading={true}
-                  loadingIndicator={(props) => (
-                    <Ionicons name="search" size={24} color="white" />
-                  )}
-                  loadingIndicatorPosition="overlay"
-                  onPress={handleSearchBtn}
-                />
-              </View>
-            </TouchableOpacity>
-          </Stack>
+          <TextInput
+            style={{
+              width: width * 0.9,
+            }}
+            label="Search"
+            placeholder="Search by name or tag"
+            color="royalblue"
+            variant="standard"
+            value={searchQuery}
+            onChangeText={(text) => handleSearchQuery(text)}
+            leading={(props) => (
+              <MaterialCommunityIcons
+                name="account-search"
+                size={24}
+                color="black"
+              />
+            )}
+            trailing={(props) => (
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchQuery("");
+                  setFilteredUsers(scannedUsers);
+                }}
+              >
+                <View>
+                  <Feather name="x-circle" size={20} color="gray" />
+                </View>
+              </TouchableOpacity>
+            )}
+          />
           <ScrollView style={styles.scrollStackStyle}>
             <Stack
               style={{ alignItems: "center", paddingBottom: height * 0.1 }}
               direction="column"
               spacing={height * 0.02}
             >
-              {scannedUsers ? (
-                scannedUsers.map(scannedUserView)
+              {filteredUsers ? (
+                filteredUsers.map(scrollUserView)
               ) : (
                 <ActivityIndicator
                   color="royalblue"
