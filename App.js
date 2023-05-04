@@ -1,20 +1,71 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import "react-native-gesture-handler";
+import React, { useState, useEffect } from "react";
+import { DefaultTheme, Provider as PaperProvider } from "react-native-paper";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import LoadingPage from "./pages/LoadingPage";
+import HomePage from "./pages/HomePage";
+import JoinSitePage from "./pages/JoinSite";
 
-export default function App() {
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: "crimson",
+  },
+};
+
+const Stack = createStackNavigator();
+
+function App() {
+  const [siteCode, setSiteCode] = useState("0");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem("site_id").then((value) => {
+      setSiteCode(value);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return <LoadingPage />;
+  }
+  if (siteCode === "0") {
+    return (
+      <PaperProvider theme={theme}>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              gestureEnabled: false,
+              gestureDirection: "horizontal",
+            }}
+          >
+            <Stack.Screen name="JoinSite" component={JoinSitePage} />
+            <Stack.Screen name="HomePage" component={HomePage} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PaperProvider>
+    );
+  }
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <PaperProvider theme={theme}>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            gestureEnabled: false,
+            gestureDirection: "horizontal",
+          }}
+        >
+          <Stack.Screen name="HomePage" component={HomePage} />
+          <Stack.Screen name="JoinSite" component={JoinSitePage} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;

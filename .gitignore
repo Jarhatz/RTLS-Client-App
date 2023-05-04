@@ -2,6 +2,7 @@ node_modules/
 .expo/
 dist/
 npm-debug.*
+*.env
 *.jks
 *.p8
 *.p12
@@ -9,6 +10,8 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
+comps/DBClient.js
+comps/S3Client.js
 
 # macOS
 .DS_Store
