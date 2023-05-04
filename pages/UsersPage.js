@@ -14,14 +14,13 @@ import {
   Image,
 } from "react-native";
 import { Stack } from "react-native-flex-layout";
-import { Box, Button, TextInput } from "@react-native-material/core";
+import { Avatar, Box, Button, TextInput } from "@react-native-material/core";
 import {
   ActivityIndicator,
   Text,
   IconButton,
   Dialog,
   Portal,
-  DataTable,
   Divider,
 } from "react-native-paper";
 import {
@@ -32,7 +31,8 @@ import {
 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import SiteContext from "../comps/SiteContext";
-import { dbClient } from "../comps/DBClient";
+import { DBClient } from "../comps/DBClient";
+import { S3Client } from "../comps/S3Client";
 
 const { width } = Dimensions.get("window");
 const { height } = Dimensions.get("window");
@@ -43,6 +43,7 @@ function UsersPage({ navigation }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [scannedUsers, setScannedUsers] = useState(null);
   const [filteredUsers, setFilteredUsers] = useState(null);
+  const [userImageMap, setUserImageMap] = useState({});
 
   useFocusEffect(
     React.useCallback(() => {
@@ -50,6 +51,7 @@ function UsersPage({ navigation }) {
       return () => {
         setScannedUsers(null);
         setFilteredUsers(null);
+        setUserImageMap({});
       };
     }, [siteId])
   );
@@ -59,7 +61,7 @@ function UsersPage({ navigation }) {
       TableName: "sites_" + siteId + "_users",
     };
     try {
-      const response = await dbClient.scan(params);
+      const response = await DBClient.scan(params);
       const items = response.Items;
       items.sort((a, b) => {
         if (a.alert.S > b.alert.S) return -1;
@@ -70,8 +72,37 @@ function UsersPage({ navigation }) {
       });
       setScannedUsers(items);
       setFilteredUsers(items);
+      items.forEach(async (item) => {
+        if (item.pic_key.S !== "") {
+          try {
+            const params = {
+              Bucket: "rtls-sites-assets",
+              Key: item.pic_key.S,
+            };
+            const imageObj = await S3Client.getObject(params).promise();
+            const uri = `data:image/jpeg;base64,${imageObj.Body.toString(
+              "base64"
+            )}`;
+            setUserImageMap((dict) => ({
+              ...dict,
+              [item.user_name.S]: uri,
+            }));
+          } catch (error) {
+            console.log("[1] UserPage.js: ", error);
+            setUserImageMap((dict) => ({
+              ...dict,
+              [item.user_name.S]: "",
+            }));
+          }
+        } else {
+          setUserImageMap((dict) => ({
+            ...dict,
+            [item.user_name.S]: "",
+          }));
+        }
+      });
     } catch (error) {
-      console.log(error);
+      console.log("[2] UserPage.js: ", error);
     }
   };
 
@@ -116,6 +147,85 @@ function UsersPage({ navigation }) {
     }
   };
 
+  const renderAvatar = (username) => {
+    if (userImageMap[username] === "") {
+      return (
+        <Avatar
+          style={{
+            backgroundColor: "white",
+            borderColor: "gray",
+            borderWidth: 1,
+          }}
+          icon={(props) => (
+            <Ionicons name="person-sharp" size={28} color="black" />
+          )}
+        />
+      );
+    } else {
+      return (
+        <Avatar
+          style={{
+            backgroundColor: "white",
+          }}
+          image={{ uri: userImageMap[username] }}
+        />
+      );
+    }
+  };
+
+  const handleScrollView = () => {
+    if (filteredUsers.length === 0) {
+      return (
+        <Box style={styles.noUserBoxStyle}>
+          <Stack
+            style={styles.noUserBoxInsideStyle}
+            direction="column"
+            spacing={height * 0.01}
+          >
+            <Avatar
+              style={{
+                backgroundColor: "white",
+                borderColor: "gray",
+                borderWidth: 1,
+              }}
+              icon={(props) => (
+                <Ionicons name="person-sharp" size={28} color="black" />
+              )}
+            />
+            <Stack
+              style={{
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+              direction="row"
+            >
+              <Text
+                style={{ color: "black", fontWeight: "bold" }}
+                variant="titleMedium"
+              >
+                No Users
+              </Text>
+              <MaterialCommunityIcons
+                name="link-off"
+                size={24}
+                color="crimson"
+              />
+            </Stack>
+            <Divider style={{ width: width * 0.8 }} bold={true} />
+          </Stack>
+          <Text
+            style={{ color: "gray", alignSelf: "center" }}
+            variant="titleSmall"
+          >
+            No users were found. You may add new users.{"\n\n"}
+          </Text>
+        </Box>
+      );
+    } else {
+      return filteredUsers.map(scrollUserView);
+    }
+  };
+
   const scrollUserView = (user, id) => {
     return (
       <Box style={styles.userBoxStyle} key={id}>
@@ -128,42 +238,51 @@ function UsersPage({ navigation }) {
             style={{ alignItems: "center", justifyContent: "space-between" }}
             direction="row"
           >
-            <Text>
-              {user.user_tag.S === "" ? (
+            <Stack direction="column" spacing={height * 0.01}>
+              {renderAvatar(user.user_name.S)}
+              <Text>
+                {user.user_tag.S === "" ? (
+                  <Text
+                    style={{ color: "gray", fontStyle: "italic" }}
+                    variant="titleMedium"
+                  >
+                    #0000 -{" "}
+                  </Text>
+                ) : (
+                  <Text
+                    style={{ color: "royalblue", fontStyle: "italic" }}
+                    variant="titleMedium"
+                  >
+                    #
+                    {user.user_tag.S.substring(
+                      user.user_tag.S.indexOf("_TAG_") + 5,
+                      user.user_tag.S.length
+                    )}{" "}
+                    -{" "}
+                  </Text>
+                )}
                 <Text
-                  style={{ color: "gray", fontStyle: "italic" }}
+                  style={{ color: "black", fontWeight: "bold" }}
                   variant="titleMedium"
                 >
-                  #0000 -{" "}
+                  {formatUserName(user.user_name.S)}
                 </Text>
-              ) : (
-                <Text
-                  style={{ color: "royalblue", fontStyle: "italic" }}
-                  variant="titleMedium"
-                >
-                  #
-                  {user.user_tag.S.substring(
-                    user.user_tag.S.indexOf("_TAG_") + 5,
-                    user.user_tag.S.length
-                  )}{" "}
-                  -{" "}
-                </Text>
-              )}
-              <Text
-                style={{ color: "black", fontWeight: "bold" }}
-                variant="titleMedium"
-              >
-                {formatUserName(user.user_name.S)}
               </Text>
-            </Text>
+            </Stack>
             {user.user_tag.S === "" ? (
               <MaterialCommunityIcons
+                style={{ alignSelf: "flex-start" }}
                 name="link-off"
                 size={24}
                 color="crimson"
               />
             ) : (
-              <MaterialCommunityIcons name="link" size={24} color="green" />
+              <MaterialCommunityIcons
+                style={{ alignSelf: "flex-start" }}
+                name="link"
+                size={24}
+                color="green"
+              />
             )}
           </Stack>
           <Divider style={{ width: width * 0.8 }} bold={true} />
@@ -256,6 +375,7 @@ function UsersPage({ navigation }) {
                 navigation.navigate("UsersEdit", {
                   userName: user.user_name.S,
                   currentUserTag: user.user_tag.S,
+                  currentUserPicUri: userImageMap[user.user_name.S],
                 })
               }
             />
@@ -321,7 +441,7 @@ function UsersPage({ navigation }) {
               spacing={height * 0.02}
             >
               {filteredUsers ? (
-                filteredUsers.map(scrollUserView)
+                handleScrollView()
               ) : (
                 <ActivityIndicator
                   color="royalblue"
@@ -353,10 +473,11 @@ function UsersPage({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "whitesmoke",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "whitesmoke",
   },
   centered: {
     flex: 1,
@@ -393,6 +514,22 @@ const styles = StyleSheet.create({
   userBoxInsideStyle: {
     paddingTop: height * 0.01,
     paddingBottom: height * 0.01,
+    paddingLeft: width * 0.05,
+    paddingRight: width * 0.05,
+    justifyContent: "center",
+  },
+  noUserBoxStyle: {
+    width: width * 0.9,
+    borderRadius: 10,
+    backgroundColor: "white",
+    borderColor: "lightgray",
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noUserBoxInsideStyle: {
+    paddingTop: height * 0.02,
+    paddingBottom: height * 0.02,
     paddingLeft: width * 0.05,
     paddingRight: width * 0.05,
     justifyContent: "center",

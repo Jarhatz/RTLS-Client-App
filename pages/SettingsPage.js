@@ -135,10 +135,11 @@ function SettingsPage({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "whitesmoke",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "whitesmoke",
   },
   centered: {
     flex: 1,

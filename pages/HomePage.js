@@ -5,12 +5,14 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SiteContext from "../comps/SiteContext.js";
-import { dbClient } from "../comps/DBClient";
-import TemplatePage from "./TemplatePage.js";
+import { DBClient } from "../comps/DBClient";
+
 import UsersPage from "./UsersPage.js";
 import AddUserPage from "./UsersAddPage.js";
 import EditUserPage from "./UsersEditPage.js";
+import MapPage from "./MapPage.js";
 import SettingsPage from "./SettingsPage.js";
+import TemplatePage from "./TemplatePage.js";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -34,7 +36,7 @@ function HomePage() {
           site_id: { S: siteId },
         },
       };
-      dbClient.getItem(params, (err, data) => {
+      DBClient.getItem(params, (err, data) => {
         if (err) {
           console.err(err);
           setSiteName(null);
@@ -123,7 +125,7 @@ function HomePage() {
         })}
       >
         <Tab.Screen name="Users" component={UsersStack} />
-        <Tab.Screen name="Map" component={TemplatePage} />
+        <Tab.Screen name="Map" component={MapPage} />
         <Tab.Screen name="Devices" component={TemplatePage} />
         <Tab.Screen name="Settings" component={SettingsPage} />
       </Tab.Navigator>

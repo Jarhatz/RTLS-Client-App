@@ -16,7 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { dbClient } from "../comps/DBClient";
+import { DBClient } from "../comps/DBClient";
 
 const { width } = Dimensions.get("window");
 const { height } = Dimensions.get("window");
@@ -24,7 +24,7 @@ const { height } = Dimensions.get("window");
 const JoinSitePage = () => {
   const navigation = useNavigation();
   const [cameraPermission, setCameraPermission] = useState(null);
-  const [scanned, setScanned] = useState(true);
+  const [scanned, setScanned] = useState(false);
   const [siteCodeInput, setSiteCodeInput] = useState("");
   const [visibleDialog1, setVisibleDialog1] = useState(false);
   const [visibleDialog2, setVisibleDialog2] = useState(false);
@@ -42,6 +42,7 @@ const JoinSitePage = () => {
   };
 
   const checkCode = async (code, codeType) => {
+    console.log("got here!");
     var params;
     if (codeType) {
       params = {
@@ -61,7 +62,7 @@ const JoinSitePage = () => {
       };
     }
     try {
-      const response = await dbClient.scan(params);
+      const response = await DBClient.scan(params);
       return response.Items;
     } catch (err) {
       console.error(err);
@@ -294,10 +295,11 @@ const JoinSitePage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#fff",
   },
   centeredStack: {
     alignItems: "center",
