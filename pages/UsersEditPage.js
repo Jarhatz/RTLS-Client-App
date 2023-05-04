@@ -41,9 +41,7 @@ function EditUserPage({ route, navigation }) {
   const [visibleDialog2, setVisibleDialog2] = useState(false);
   const [visibleDialog3, setVisibleDialog3] = useState(false);
   const [visibleDialog4, setVisibleDialog4] = useState(false);
-  let response1 = false;
-  let response2 = false;
-  let response3 = false;
+  const [visibleDialog5, setVisibleDialog5] = useState(false);
 
   const showDialog = (dialogType) => {
     if (dialogType === 1) {
@@ -52,8 +50,10 @@ function EditUserPage({ route, navigation }) {
       setVisibleDialog2(true);
     } else if (dialogType === 3) {
       setVisibleDialog3(true);
-    } else {
+    } else if (dialogType === 4) {
       setVisibleDialog4(true);
+    } else {
+      setVisibleDialog5(true);
     }
   };
 
@@ -64,8 +64,10 @@ function EditUserPage({ route, navigation }) {
       setVisibleDialog2(false);
     } else if (dialogType === 3) {
       setVisibleDialog3(false);
-    } else {
+    } else if (dialogType === 4) {
       setVisibleDialog4(false);
+    } else {
+      setVisibleDialog5(false);
     }
   };
 
@@ -127,54 +129,71 @@ function EditUserPage({ route, navigation }) {
   const handleDeleteBtn = async () => {
     Keyboard.dismiss();
     setLoading(true);
-    const userParams = {
-      TableName: "sites_" + siteId + "_users",
-      Key: {
-        user_name: { S: userName },
-      },
-    };
+    let getUserFinish = 0;
+    let updateTagFinish = 0;
+    let deleteObjectFinish = 0;
+    let deleteUserFinish = 0;
     try {
+      const userParams = {
+        TableName: "sites_" + siteId + "_users",
+        Key: {
+          user_name: { S: userName },
+        },
+      };
+      getUserFinish = 1;
       const getResponse = await DBClient.getItem(userParams);
+      getUserFinish = 2;
       if (getResponse.Item !== undefined) {
         if (getResponse.Item.user_tag.S !== "") {
-          const tagParams = {
-            TableName: "sites_" + siteId + "_tags",
-            Key: {
-              tag_id: {
-                S: getResponse.Item.user_tag.S,
-              },
-            },
-            UpdateExpression: "SET user_name = :value1",
-            ExpressionAttributeValues: {
-              ":value1": {
-                S: "",
-              },
-            },
-            ReturnValues: "ALL_NEW",
-          };
           try {
+            const tagParams = {
+              TableName: "sites_" + siteId + "_tags",
+              Key: {
+                tag_id: {
+                  S: getResponse.Item.user_tag.S,
+                },
+              },
+              UpdateExpression: "SET user_name = :value1",
+              ExpressionAttributeValues: {
+                ":value1": {
+                  S: "",
+                },
+              },
+              ReturnValues: "ALL_NEW",
+            };
+            updateTagFinish = 1;
             const updateResponse = await DBClient.updateItem(tagParams);
+            updateTagFinish = 2;
           } catch (error) {
             console.log(error);
           }
         }
         if (getResponse.Item.pic_key.S !== "") {
-          const imageParams = {
-            Bucket: "rtls-sites-assets",
-            Key: getResponse.Item.pic_key.S,
-          };
           try {
+            const imageParams = {
+              Bucket: "rtls-sites-assets",
+              Key: getResponse.Item.pic_key.S,
+            };
+            deleteObjectFinish = 1;
             const response = await S3Client.deleteObject(imageParams).promise();
+            deleteObjectFinish = 2;
           } catch (error) {
             console.log(error);
           }
         }
+        deleteUserFinish = 1;
         const deleteResponse = await DBClient.deleteItem(userParams);
-        response1 = true;
-        if (response1) {
-          setLoading(false);
+        deleteUserFinish = 2;
+        if (
+          (deleteUserFinish === 2 &&
+            (deleteObjectFinish === 0 || deleteObjectFinish === 2)) ||
+          (updateTagFinish === 0 && updateTagFinish === 2)
+        ) {
           navigation.navigate("UsersHome");
         }
+      } else {
+        setLoading(false);
+        showDialog(5); // User Not Found
       }
     } catch (err) {
       console.log(err);
@@ -252,7 +271,6 @@ function EditUserPage({ route, navigation }) {
             imageUploadFinish === 2 &&
             (updateUserImageFinish === 0 || updateUserImageFinish === 2)
           ) {
-            setLoading(false);
             const delayed = setTimeout(() => {
               navigation.navigate("UsersHome");
             }, 1000);
@@ -297,7 +315,6 @@ function EditUserPage({ route, navigation }) {
             imageUploadFinish === 2 &&
             (updateUserImageFinish === 0 || updateUserImageFinish === 2)
           ) {
-            setLoading(false);
             const delayed = setTimeout(() => {
               navigation.navigate("UsersHome");
             }, 1000);
@@ -440,7 +457,6 @@ function EditUserPage({ route, navigation }) {
                     (updateUserImageFinish === 0 ||
                       updateUserImageFinish === 2)))
               ) {
-                setLoading(false);
                 const delayed = setTimeout(() => {
                   navigation.navigate("UsersHome");
                 }, 1000);
@@ -816,6 +832,30 @@ function EditUserPage({ route, navigation }) {
                     title="OK"
                     color="royalblue"
                     onPress={() => hideDialog(4)}
+                  />
+                </Dialog.Actions>
+              </Dialog>
+              <Dialog
+                style={{ backgroundColor: "white" }}
+                visible={visibleDialog5}
+                onDismiss={() => hideDialog(5)}
+              >
+                <Dialog.Title
+                  style={{ color: "royalblue", fontWeight: "bold" }}
+                >
+                  User Not Found
+                </Dialog.Title>
+                <Dialog.Content>
+                  <Text variant="bodyMedium">
+                    The selected user could not be found in our database. This
+                    user may have already been deleted.{"\n"}
+                  </Text>
+                </Dialog.Content>
+                <Dialog.Actions>
+                  <Button
+                    title="OK"
+                    color="royalblue"
+                    onPress={() => hideDialog(5)}
                   />
                 </Dialog.Actions>
               </Dialog>

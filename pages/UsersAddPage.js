@@ -179,7 +179,6 @@ function AddUserPage({ navigation }) {
                 userCreationFinish === 2 &&
                 (imageUploadFinish === 0 || imageUploadFinish === 2)
               ) {
-                setLoading(false);
                 const delayed = setTimeout(() => {
                   navigation.navigate("UsersHome");
                 }, 1000);
@@ -272,7 +271,6 @@ function AddUserPage({ navigation }) {
                     userCreationFinish === 2 &&
                     (unpairOldUserFinish === 0 || unpairOldUserFinish === 2)
                   ) {
-                    setLoading(false);
                     const delayed = setTimeout(() => {
                       navigation.navigate("UsersHome");
                     }, 1000);

@@ -42,25 +42,22 @@ const MapPage = () => {
   const { siteName, setSiteName } = useContext(SiteContext);
   const [siteMapBase64, setSiteMapBase64] = useState(null);
 
-  // useEffect(() => {
-  //   getSiteMapBase64();
-  // }, [siteId]);
+  useEffect(() => {
+    getSiteMapBase64();
+  }, [siteId]);
 
   const getSiteMapBase64 = async () => {
     const params = {
-      TableName: "sites",
-      Key: {
-        site_id: { S: siteId },
-      },
-      ProjectionExpression: "site_map",
+      Bucket: "rtls-sites-assets",
+      Key: "site_" + siteId + "_map",
     };
-    try {
-      const response = await dbClient.getItem(params);
-      const attr = response.Item.site_map.S;
-      setSiteMapBase64(attr);
-    } catch (error) {
-      console.log(error);
-    }
+    // try {
+    //   const response = await dbClient.getItem(params);
+    //   const attr = response.Item.site_map.S;
+    //   setSiteMapBase64(attr);
+    // } catch (error) {
+    //   console.log(error);
+    // }
   };
 
   return (

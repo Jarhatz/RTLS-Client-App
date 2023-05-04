@@ -5,7 +5,7 @@ import { S3 } from "aws-sdk";
 export const S3Client = new S3({
   region: "us-west-2",
   credentials: {
-    accessKeyId: "AKIAXPVEIVP4SS6GYIOD",
-    secretAccessKey: "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",
+    accessKeyId: "AKIAXPVEIVP46HIEYMF6",
+    secretAccessKey: "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",
   },
 });
