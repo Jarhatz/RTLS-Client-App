@@ -12,7 +12,7 @@ const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "crimson",
+    primary: "royalblue",
   },
 };
 

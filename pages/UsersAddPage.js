@@ -118,7 +118,7 @@ function AddUserPage({ navigation }) {
     try {
       const uploadResponse = await S3Client.putObject(params).promise();
     } catch (error) {
-      console.log(error);
+      console.warn(error);
     }
   };
 
@@ -181,7 +181,7 @@ function AddUserPage({ navigation }) {
               ) {
                 const delayed = setTimeout(() => {
                   navigation.navigate("UsersHome");
-                }, 1000);
+                }, 2000);
               }
             } catch (error) {
               console.error(error);
@@ -273,7 +273,7 @@ function AddUserPage({ navigation }) {
                   ) {
                     const delayed = setTimeout(() => {
                       navigation.navigate("UsersHome");
-                    }, 1000);
+                    }, 2000);
                   }
                 } catch (error) {
                   console.error(error);
@@ -303,7 +303,7 @@ function AddUserPage({ navigation }) {
         >
           <View style={{ flex: 1, backgroundColor: "whitesmoke" }}>
             <Stack
-              style={styles.addCentered}
+              style={styles.centered}
               direction="column"
               spacing={height * 0.05}
             >
@@ -451,12 +451,9 @@ function AddUserPage({ navigation }) {
                     <Button
                       style={{
                         width: width * 0.4,
-                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
-                        paddingTop: 10,
-                        paddingBottom: 10,
-                        borderWidth: 2,
+                        borderWidth: 1,
                         borderColor: "royalblue",
                       }}
                       variant="outlined"
@@ -478,7 +475,6 @@ function AddUserPage({ navigation }) {
                     <Button
                       style={{
                         width: width * 0.4,
-                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
                       }}
@@ -487,7 +483,7 @@ function AddUserPage({ navigation }) {
                       leading={(props) => (
                         <Ionicons
                           name="person-add-sharp"
-                          size={24}
+                          size={20}
                           color="white"
                         />
                       )}
@@ -639,18 +635,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "whitesmoke",
   },
   centered: {
-    flex: 1,
-    width: width,
-    alignItems: "center",
-    paddingBottom: height * 0.015,
-  },
-  addCentered: {
     flex: 1,
     width: width,
     alignItems: "center",
