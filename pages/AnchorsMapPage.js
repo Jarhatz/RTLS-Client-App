@@ -56,9 +56,12 @@ const { height } = Dimensions.get("window");
 
 function MapAnchorsPage({ route, navigation }) {
   const { siteId, setSiteId } = useContext(SiteContext);
+  const { anchorID, currentAnchorName, mac, currentLocation } = route.params;
   const { siteName, setSiteName } = useContext(SiteContext);
   const [siteMapUri, setSiteMapUri] = useState(null);
   const zoomableViewRef = useRef(null);
+  const [locationX, setLocationX] = useState(0);
+  const [locationY, setLocationY] = useState(0);
   const [anchorPositionX, setAnchorPositionX] = useState(0);
   const [anchorPositionY, setAnchorPositionY] = useState(0);
   let mapOriginalWidth = null;
@@ -112,11 +115,12 @@ function MapAnchorsPage({ route, navigation }) {
         const scaledY = imageHeight / 2 - offsetY - zoomHeight / 2 + zoomY;
         const scaledHeight = mapOriginalHeight / imageHeight;
         const universalY = scaledY * scaledHeight;
-        console.log("scaledX: ", scaledX);
-        console.log("scaledY: ", scaledY);
-        console.log("universalX: ", universalX);
-        console.log("universalY: ", universalY);
-        console.log();
+        // console.log("scaledX: ", scaledX);
+        // console.log("scaledY: ", scaledY);
+        // console.log("universalX: ", universalX);
+        // console.log("universalY: ", universalY);
+        setLocationX(Math.round(universalX));
+        setLocationY(Math.round(universalY));
         setAnchorPositionX(scaledX * 2);
         setAnchorPositionY(scaledY);
       }
@@ -152,6 +156,22 @@ function MapAnchorsPage({ route, navigation }) {
           color="royalblue"
         />
       </ReactNativeZoomableView>
+      <View style={{ position: "absolute", top: height * 0.1 }}>
+        <Box style={styles.boxStyle}>
+          <Stack
+            style={{
+              alignItems: "center",
+            }}
+            direction="row"
+            spacing={width * 0.05}
+          >
+            <MaterialIcons name="info-outline" size={20} color="royalblue" />
+            <Text style={{ alignSelf: "center" }}>
+              Long Press to set Location
+            </Text>
+          </Stack>
+        </Box>
+      </View>
       <View
         style={{
           position: "absolute",
@@ -179,7 +199,14 @@ function MapAnchorsPage({ route, navigation }) {
             leading={(props) => (
               <Ionicons name="arrow-back" size={24} color="royalblue" />
             )}
-            onPress={() => navigation.navigate("AnchorsView")}
+            onPress={() => {
+              navigation.navigate("AnchorsView", {
+                anchorID: anchorID,
+                currentAnchorName: currentAnchorName,
+                mac: mac,
+                currentLocation: currentLocation,
+              });
+            }}
           />
           <Button
             style={{ width: width * 0.3 }}
@@ -188,6 +215,14 @@ function MapAnchorsPage({ route, navigation }) {
             trailing={(props) => (
               <Ionicons name="arrow-forward" size={24} color="white" />
             )}
+            onPress={() => {
+              navigation.navigate("AnchorsView", {
+                anchorID: anchorID,
+                currentAnchorName: currentAnchorName,
+                mac: mac,
+                currentLocation: [locationX.toString(), locationY.toString()],
+              });
+            }}
           />
         </Stack>
       </View>
@@ -210,6 +245,24 @@ const styles = StyleSheet.create({
   },
   anchorStyle: {
     position: "absolute",
+  },
+  boxStyle: {
+    width: width * 0.75,
+    height: height * 0.05,
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    borderRadius: 10,
+    backgroundColor: "white",
+    shadowColor: "black",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    elevation: 5,
   },
 });
 
