@@ -72,11 +72,6 @@ function ViewAnchorsPage({ route, navigation }) {
     }
   };
 
-  useEffect(() => {
-    console.log(currentLocation[0]);
-    console.log(currentLocation[1]);
-  });
-
   const handleSaveBtn = async () => {
     Keyboard.dismiss();
     setLoading(true);
