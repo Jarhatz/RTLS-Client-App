@@ -75,6 +75,107 @@ function ViewAnchorsPage({ route, navigation }) {
   const handleSaveBtn = async () => {
     Keyboard.dismiss();
     setLoading(true);
+
+    let updateNameFinish = 0;
+    let updateLocationFinish = 0;
+
+    if (currentLocation[0].S === "") {
+      if (anchorName === "" || anchorName.toUpperCase() === currentAnchorName) {
+        setLoading(false);
+        showDialog(1); // No Anchor Edit
+      } else {
+        // HANDLE NAME CHANGE
+        try {
+          const updateNameParams = {
+            TableName: "sites_" + siteId + "_anchors",
+            Key: {
+              anchor_id: { S: anchorID },
+            },
+            UpdateExpression: "SET anchor_name = :value",
+            ExpressionAttributeValues: {
+              ":value": { S: anchorName.toUpperCase() },
+            },
+            ReturnValues: "ALL_NEW",
+          };
+          updateNameFinish = 1;
+          const updateNameResponse = await DBClient.updateItem(
+            updateNameParams
+          );
+          updateNameFinish = 2;
+        } catch (error) {
+          console.warn(error);
+        }
+        if (updateNameFinish === 2) {
+          const delayed = setTimeout(() => {
+            navigation.navigate("AnchorsHome");
+          }, 2000);
+        }
+      }
+    } else {
+      if (anchorName === "" || anchorName.toUpperCase() === currentAnchorName) {
+        // HANDLE LOCATION CHANGE
+        try {
+          const updateLocationParams = {
+            TableName: "sites_" + siteId + "_anchors",
+            Key: {
+              anchor_id: { S: anchorID },
+            },
+            UpdateExpression: "SET coordinates = :value",
+            ExpressionAttributeValues: {
+              ":value": {
+                L: [{ S: currentLocation[0] }, { S: currentLocation[1] }],
+              },
+            },
+            ReturnValues: "ALL_NEW",
+          };
+          updateLocationFinish = 1;
+          const updateLocationResponse = await DBClient.updateItem(
+            updateLocationParams
+          );
+          updateLocationFinish = 2;
+        } catch (error) {
+          console.warn(error);
+        }
+        if (updateLocationFinish === 2) {
+          const delayed = setTimeout(() => {
+            navigation.navigate("AnchorsHome");
+          }, 2000);
+        }
+      } else {
+        try {
+          const updateBothParams = {
+            TableName: "sites_" + siteId + "_anchors",
+            Key: {
+              anchor_id: { S: anchorID },
+            },
+            UpdateExpression: "SET #attr1 = :value1, #attr2 = :value2",
+            ExpressionAttributeNames: {
+              "#attr1": "anchor_name",
+              "#attr2": "coordinates",
+            },
+            ExpressionAttributeValues: {
+              ":value1": { S: anchorName.toUpperCase() },
+              ":value2": {
+                L: [{ S: currentLocation[0] }, { S: currentLocation[1] }],
+              },
+            },
+            ReturnValues: "ALL_NEW",
+          };
+          updateNameFinish = 1;
+          const updateBothResponse = await DBClient.updateItem(
+            updateBothParams
+          );
+          updateNameFinish = 2;
+        } catch (error) {
+          console.warn(error);
+        }
+        if (updateNameFinish === 2) {
+          const delayed = setTimeout(() => {
+            navigation.navigate("AnchorsHome");
+          }, 2000);
+        }
+      }
+    }
   };
 
   return (
@@ -141,8 +242,8 @@ function ViewAnchorsPage({ route, navigation }) {
               >
                 <Text>
                   <Text variant="titleMedium">Anchor Location: </Text>
-                  {currentLocation[0].S === "" ? (
-                    <Text style={{ color: "gray" }}>[x: --, y: --]</Text>
+                  {currentLocation[0] === "" ? (
+                    <Text style={{ color: "gray" }}>[x: N/A, y: N/A]</Text>
                   ) : (
                     <Text style={{ color: "gray" }}>
                       [x: {currentLocation[0]}, y: {currentLocation[1]}]
@@ -227,7 +328,7 @@ function ViewAnchorsPage({ route, navigation }) {
               onDismiss={() => hideDialog(1)}
             >
               <Dialog.Title style={{ color: "royalblue", fontWeight: "bold" }}>
-                What is Tag ID?
+                Invalid Edit
               </Dialog.Title>
               <Dialog.Content>
                 <Stack
@@ -238,14 +339,20 @@ function ViewAnchorsPage({ route, navigation }) {
                   direction="column"
                 >
                   <Text variant="bodyMedium">
-                    The Tag ID is a 4-character field that is used to pair a tag
-                    to a user to monitor their whereabouts. Tags can be paired
-                    to only one user at a time. They can also be updated or
-                    added to a user at any point in time.
+                    There is no change to the selected anchor. In order to save,
+                    please enter a new name for the anchor and/or choose a
+                    location on the map.
                     {"\n"}
                   </Text>
                 </Stack>
               </Dialog.Content>
+              <Dialog.Actions>
+                <Button
+                  title="OK"
+                  color="royalblue"
+                  onPress={() => hideDialog(1)}
+                />
+              </Dialog.Actions>
             </Dialog>
             <Dialog
               style={{ backgroundColor: "white" }}

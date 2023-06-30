@@ -64,9 +64,9 @@ function AnchorsPage({ navigation }) {
       items.sort((a, b) => {
         if (a.online.S === "1" && b.online.S === "0") return 1;
         if (a.online.S === "0" && b.online.S === "1") return -1;
-        if (a.name.S === "" && b.name.S !== "") return 1;
-        if (a.name.S !== "" && b.name.S === "") return -1;
-        return a.name.S >= b.name.S ? 1 : -1;
+        if (a.anchor_name.S === "" && b.anchor_name.S !== "") return 1;
+        if (a.anchor_name.S !== "" && b.anchor_name.S === "") return -1;
+        return a.anchor_name.S >= b.anchor_name.S ? 1 : -1;
       });
       setScannedAnchors(items);
       setFilteredAnchors(items);
@@ -82,7 +82,7 @@ function AnchorsPage({ navigation }) {
     } else {
       setFilteredAnchors(
         scannedAnchors.filter((anchor) => {
-          if (anchor.name.S.startsWith(query.toUpperCase())) return true;
+          if (anchor.anchor_name.S.startsWith(query.toUpperCase())) return true;
           if (
             anchor.anchor_id.S !== "" &&
             anchor.anchor_id.S.substring(
@@ -191,7 +191,7 @@ function AnchorsPage({ navigation }) {
                 style={{ color: "black", fontWeight: "bold" }}
                 variant="titleMedium"
               >
-                {formatAnchorName(anchor.name.S)}
+                {formatAnchorName(anchor.anchor_name.S)}
               </Text>
             </Text>
             {anchor.online.S === "0" ? (
@@ -233,12 +233,13 @@ function AnchorsPage({ navigation }) {
             >
               <MaterialIcons name="location-pin" size={20} color="gray" />
               <Text style={{ color: "gray" }} variant="titleSmall">
-                {anchor.location.L[0].S === "" || anchor.location.L[1].S === ""
+                {anchor.coordinates.L[0].S === "" ||
+                anchor.coordinates.L[1].S === ""
                   ? "No Location Set"
                   : "(x: " +
-                    anchor.location.L[0].S +
+                    anchor.coordinates.L[0].S +
                     ", y: " +
-                    anchor.location.L[1].S +
+                    anchor.coordinates.L[1].S +
                     ")"}
               </Text>
             </Stack>
@@ -259,9 +260,12 @@ function AnchorsPage({ navigation }) {
             onPress={() => {
               navigation.navigate("AnchorsView", {
                 anchorID: anchor.anchor_id.S,
-                currentAnchorName: anchor.name.S,
+                currentAnchorName: anchor.anchor_name.S,
                 mac: anchor.mac.S,
-                currentLocation: anchor.location.L,
+                currentLocation: [
+                  anchor.coordinates.L[0].S,
+                  anchor.coordinates.L[1].S,
+                ],
               });
             }}
           />
