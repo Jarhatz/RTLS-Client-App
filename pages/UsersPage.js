@@ -305,7 +305,7 @@ function UsersPage({ navigation }) {
               >
                 <Ionicons name="battery-full" size={20} color="gray" />
                 <Text style={{ color: "gray" }} variant="titleSmall">
-                  100%
+                  {user.battery ? user.battery.S : "N/A"}
                 </Text>
               </Stack>
               <Stack
