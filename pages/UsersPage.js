@@ -148,7 +148,14 @@ function UsersPage({ navigation }) {
   };
 
   const showLocations = (locations) => {
-    return JSON.stringify(locations);
+    return (
+      formatUserName(locations[0].S) +
+      " (" +
+      locations[1].S +
+      ", " +
+      locations[2].S +
+      ")"
+    );
   };
 
   const renderAvatar = (username) => {
@@ -396,6 +403,9 @@ function UsersPage({ navigation }) {
                 color="royalblue"
               />
             )}
+            onPress={() => {
+              navigation.navigate("Map");
+            }}
           />
         </Stack>
       </Box>
