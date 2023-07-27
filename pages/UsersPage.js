@@ -57,10 +57,10 @@ function UsersPage({ navigation }) {
   );
 
   const scanUsers = async () => {
-    const params = {
-      TableName: "sites_" + siteId + "_users",
-    };
     try {
+      const params = {
+        TableName: "sites_" + siteId + "_users",
+      };
       const response = await DBClient.scan(params);
       const items = response.Items;
       items.sort((a, b) => {
@@ -88,7 +88,7 @@ function UsersPage({ navigation }) {
               [item.user_name.S]: uri,
             }));
           } catch (error) {
-            console.log("[1] UserPage.js: ", error);
+            console.warn("[1] UserPage.js: ", error);
             setUserImageMap((dict) => ({
               ...dict,
               [item.user_name.S]: "",
@@ -104,25 +104,6 @@ function UsersPage({ navigation }) {
     } catch (error) {
       console.log("[2] UserPage.js: ", error);
     }
-  };
-
-  const formatUserName = (name) => {
-    const spaceIndex = name.indexOf(" ");
-    if (spaceIndex < 0) {
-      return name[0] + name.substring(1, name.length).toLowerCase();
-    } else {
-      return (
-        name[0] +
-        name.substring(1, spaceIndex).toLowerCase() +
-        " " +
-        name[spaceIndex + 1] +
-        name.substring(spaceIndex + 2, name.length).toLowerCase()
-      );
-    }
-  };
-
-  const showLocations = (locations) => {
-    return JSON.stringify(locations);
   };
 
   const handleSearchQuery = (query) => {
@@ -145,6 +126,29 @@ function UsersPage({ navigation }) {
         })
       );
     }
+  };
+
+  const formatUserName = (name) => {
+    let formattedName = "";
+    capitalizeNext = false;
+    for (let i = 0; i < name.length; i++) {
+      if (i === 0) {
+        formattedName += name[0];
+      } else if (capitalizeNext) {
+        formattedName += name[i];
+        capitalizeNext = false;
+      } else if (name[i] === " ") {
+        formattedName += " ";
+        capitalizeNext = true;
+      } else {
+        formattedName += name[i].toLowerCase();
+      }
+    }
+    return formattedName;
+  };
+
+  const showLocations = (locations) => {
+    return JSON.stringify(locations);
   };
 
   const renderAvatar = (username) => {
@@ -255,10 +259,9 @@ function UsersPage({ navigation }) {
                   >
                     #
                     {user.user_tag.S.substring(
-                      user.user_tag.S.indexOf("_TAG_") + 5,
+                      user.user_tag.S.length - 4,
                       user.user_tag.S.length
-                    )}{" "}
-                    -{" "}
+                    ) + " - "}
                   </Text>
                 )}
                 <Text
@@ -300,13 +303,9 @@ function UsersPage({ navigation }) {
                 direction="row"
                 spacing={width * 0.02}
               >
-                <MaterialCommunityIcons
-                  name="office-building-outline"
-                  size={20}
-                  color="gray"
-                />
+                <Ionicons name="battery-full" size={20} color="gray" />
                 <Text style={{ color: "gray" }} variant="titleSmall">
-                  {siteName}
+                  {user.battery ? user.battery.S : "N/A"}
                 </Text>
               </Stack>
               <Stack
@@ -345,7 +344,11 @@ function UsersPage({ navigation }) {
                 direction="row"
                 spacing={width * 0.02}
               >
-                <MaterialIcons name="location-pin" size={20} color="gray" />
+                <MaterialCommunityIcons
+                  name="target-account"
+                  size={20}
+                  color="gray"
+                />
                 <Text style={{ color: "gray" }} variant="titleSmall">
                   {user.location.L.length === 0
                     ? "Unknown"
@@ -409,7 +412,7 @@ function UsersPage({ navigation }) {
               width: width * 0.9,
             }}
             label="Search"
-            placeholder="Search by name or tag"
+            placeholder="Search by Name or ID"
             color="royalblue"
             variant="standard"
             value={searchQuery}
@@ -458,7 +461,7 @@ function UsersPage({ navigation }) {
                 title="Add User"
                 color="royalblue"
                 leading={(props) => (
-                  <Ionicons name="person-add-sharp" size={24} color="white" />
+                  <Ionicons name="person-add-sharp" size={20} color="white" />
                 )}
                 onPress={() => navigation.navigate("UsersAdd")}
               />
@@ -474,7 +477,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "whitesmoke",
@@ -485,13 +487,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingBottom: height * 0.015,
   },
-  searchBarStyle: {
-    width: width,
-    height: height * 0.0655,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "whitesmoke",
-  },
   scrollStackStyle: {
     flex: 1,
     width: width,
@@ -500,7 +495,6 @@ const styles = StyleSheet.create({
   },
   addBtnStyle: {
     width: width * 0.9,
-    height: height * 0.05,
     alignItems: "center",
     justifyContent: "center",
   },

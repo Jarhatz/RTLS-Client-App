@@ -11,6 +11,9 @@ import UsersPage from "./UsersPage.js";
 import AddUserPage from "./UsersAddPage.js";
 import EditUserPage from "./UsersEditPage.js";
 import MapPage from "./MapPage.js";
+import AnchorsPage from "./AnchorsPage.js";
+import ViewAnchorsPage from "./AnchorsViewPage.js";
+import MapAnchorsPage from "./AnchorsMapPage.js";
 import SettingsPage from "./SettingsPage.js";
 import TemplatePage from "./TemplatePage.js";
 
@@ -92,11 +95,11 @@ function HomePage() {
                   <Ionicons name="map-outline" size={size} color={color} />
                 );
               }
-            } else if (route.name === "Devices") {
+            } else if (route.name === "Anchors") {
               if (focused) {
                 return (
                   <MaterialCommunityIcons
-                    name="smoke-detector"
+                    name="radio-tower"
                     size={size}
                     color="royalblue"
                   />
@@ -104,7 +107,7 @@ function HomePage() {
               } else {
                 return (
                   <MaterialCommunityIcons
-                    name="smoke-detector-outline"
+                    name="radio-tower"
                     size={size}
                     color={color}
                   />
@@ -126,7 +129,7 @@ function HomePage() {
       >
         <Tab.Screen name="Users" component={UsersStack} />
         <Tab.Screen name="Map" component={MapPage} />
-        <Tab.Screen name="Devices" component={TemplatePage} />
+        <Tab.Screen name="Anchors" component={AnchorsStack} />
         <Tab.Screen name="Settings" component={SettingsPage} />
       </Tab.Navigator>
     </SiteContext.Provider>
@@ -156,6 +159,33 @@ function UsersStack() {
       <Stack.Screen name="UsersHome" component={UsersPage} />
       <Stack.Screen name="UsersAdd" component={AddUserPage} />
       <Stack.Screen name="UsersEdit" component={EditUserPage} />
+    </Stack.Navigator>
+  );
+}
+
+function AnchorsStack() {
+  const navigation = useNavigation();
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      navigation.navigate("AnchorsHome");
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  return (
+    <Stack.Navigator
+      initialRouteName="UsersHome"
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: false,
+        gestureDirection: "horizontal",
+      }}
+    >
+      <Stack.Screen name="AnchorsHome" component={AnchorsPage} />
+      <Stack.Screen name="AnchorsView" component={ViewAnchorsPage} />
+      <Stack.Screen name="AnchorsMap" component={MapAnchorsPage} />
     </Stack.Navigator>
   );
 }

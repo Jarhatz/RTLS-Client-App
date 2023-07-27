@@ -112,18 +112,22 @@ function EditUserPage({ route, navigation }) {
   };
 
   const formatUserName = (name) => {
-    const spaceIndex = name.indexOf(" ");
-    if (spaceIndex < 0) {
-      return name[0] + name.substring(1, name.length).toLowerCase();
-    } else {
-      return (
-        name[0] +
-        name.substring(1, spaceIndex).toLowerCase() +
-        " " +
-        name[spaceIndex + 1] +
-        name.substring(spaceIndex + 2, name.length).toLowerCase()
-      );
+    let formattedName = "";
+    capitalizeNext = false;
+    for (let i = 0; i < name.length; i++) {
+      if (i === 0) {
+        formattedName += name[0];
+      } else if (capitalizeNext) {
+        formattedName += name[i];
+        capitalizeNext = false;
+      } else if (name[i] === " ") {
+        formattedName += " ";
+        capitalizeNext = true;
+      } else {
+        formattedName += name[i].toLowerCase();
+      }
     }
+    return formattedName;
   };
 
   const handleDeleteBtn = async () => {
@@ -165,7 +169,7 @@ function EditUserPage({ route, navigation }) {
             const updateResponse = await DBClient.updateItem(tagParams);
             updateTagFinish = 2;
           } catch (error) {
-            console.log(error);
+            console.warn(error);
           }
         }
         if (getResponse.Item.pic_key.S !== "") {
@@ -178,7 +182,7 @@ function EditUserPage({ route, navigation }) {
             const response = await S3Client.deleteObject(imageParams).promise();
             deleteObjectFinish = 2;
           } catch (error) {
-            console.log(error);
+            console.warn(error);
           }
         }
         deleteUserFinish = 1;
@@ -196,7 +200,7 @@ function EditUserPage({ route, navigation }) {
         showDialog(5); // User Not Found
       }
     } catch (err) {
-      console.log(err);
+      console.warn(err);
     }
   };
 
@@ -212,11 +216,11 @@ function EditUserPage({ route, navigation }) {
     try {
       const uploadResponse = await S3Client.putObject(params).promise();
     } catch (error) {
-      console.log(error);
+      console.warn(error);
     }
   };
 
-  const handleOkBtn = async () => {
+  const handleSaveBtn = async () => {
     Keyboard.dismiss();
     setLoading(true);
 
@@ -264,7 +268,7 @@ function EditUserPage({ route, navigation }) {
               );
               updateUserImageFinish = 2;
             } catch (error) {
-              console.log(error);
+              console.warn(error);
             }
           }
           if (
@@ -273,7 +277,7 @@ function EditUserPage({ route, navigation }) {
           ) {
             const delayed = setTimeout(() => {
               navigation.navigate("UsersHome");
-            }, 1000);
+            }, 2000);
           }
         }
       }
@@ -308,7 +312,7 @@ function EditUserPage({ route, navigation }) {
               );
               updateUserImageFinish = 2;
             } catch (error) {
-              console.log(error);
+              console.warn(error);
             }
           }
           if (
@@ -317,7 +321,7 @@ function EditUserPage({ route, navigation }) {
           ) {
             const delayed = setTimeout(() => {
               navigation.navigate("UsersHome");
-            }, 1000);
+            }, 2000);
           }
         }
       } else {
@@ -361,7 +365,7 @@ function EditUserPage({ route, navigation }) {
                   );
                   updateUserImageFinish = 2;
                 } catch (error) {
-                  console.log(error);
+                  console.warn(error);
                 }
               }
             }
@@ -385,7 +389,7 @@ function EditUserPage({ route, navigation }) {
                 );
                 unpairOldTagFinish = 2;
               } catch (error) {
-                console.log(error);
+                console.warn(error);
               }
             }
             if (newTagResponse.Item.user_name.S !== "") {
@@ -396,9 +400,14 @@ function EditUserPage({ route, navigation }) {
                   Key: {
                     user_name: { S: newTagResponse.Item.user_name.S },
                   },
-                  UpdateExpression: "SET user_tag = :value",
+                  UpdateExpression: "SET #attr1 = :value1, #attr2 = :value2",
+                  ExpressionAttributeNames: {
+                    "#attr1": "user_tag",
+                    "#attr2": "location",
+                  },
                   ExpressionAttributeValues: {
-                    ":value": { S: "" },
+                    ":value1": { S: "" },
+                    ":value2": { L: [] },
                   },
                   ReturnValues: "ALL_NEW",
                 };
@@ -408,7 +417,7 @@ function EditUserPage({ route, navigation }) {
                 );
                 unpairOldUserFinish = 2;
               } catch (error) {
-                console.log(error);
+                console.warn(error);
               }
             }
             try {
@@ -418,9 +427,14 @@ function EditUserPage({ route, navigation }) {
                 Key: {
                   user_name: { S: userName },
                 },
-                UpdateExpression: "SET user_tag = :value1",
+                UpdateExpression: "SET #attr1 = :value1, #attr2 = :value2",
+                ExpressionAttributeNames: {
+                  "#attr1": "user_tag",
+                  "#attr2": "location",
+                },
                 ExpressionAttributeValues: {
                   ":value1": { S: tagId },
+                  ":value2": { L: [] },
                 },
                 ReturnValues: "ALL_NEW",
               };
@@ -459,14 +473,14 @@ function EditUserPage({ route, navigation }) {
               ) {
                 const delayed = setTimeout(() => {
                   navigation.navigate("UsersHome");
-                }, 1000);
+                }, 2000);
               }
             } catch (error) {
-              console.log(error);
+              console.warn(error);
             }
           }
         } catch (error) {
-          console.log(error);
+          console.warn(error);
         }
       }
     }
@@ -482,7 +496,7 @@ function EditUserPage({ route, navigation }) {
         >
           <View style={{ flex: 1, backgroundColor: "whitesmoke" }}>
             <Stack
-              style={styles.addCentered}
+              style={styles.centered}
               direction="column"
               spacing={height * 0.05}
             >
@@ -639,12 +653,9 @@ function EditUserPage({ route, navigation }) {
                     <Button
                       style={{
                         width: width * 0.3,
-                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
-                        paddingTop: 10,
-                        paddingBottom: 10,
-                        borderWidth: 2,
+                        borderWidth: 1,
                         borderColor: "royalblue",
                       }}
                       variant="outlined"
@@ -664,11 +675,10 @@ function EditUserPage({ route, navigation }) {
                 <Button
                   style={{
                     width: width * 0.15,
-                    height: height * 0.05,
                     alignItems: "center",
                     justifyContent: "center",
+                    borderWidth: 1,
                     borderColor: "crimson",
-                    borderWidth: 2,
                   }}
                   variant="outlined"
                   color="crimson"
@@ -694,16 +704,15 @@ function EditUserPage({ route, navigation }) {
                     );
                   }}
                 />
-                <TouchableOpacity onPress={handleOkBtn}>
+                <TouchableOpacity onPress={handleSaveBtn}>
                   <View>
                     <Button
                       style={{
                         width: width * 0.3,
-                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
                       }}
-                      title="OK"
+                      title="Save"
                       color="royalblue"
                       trailing={(props) => (
                         <Ionicons
@@ -712,7 +721,7 @@ function EditUserPage({ route, navigation }) {
                           color="white"
                         />
                       )}
-                      onPress={handleOkBtn}
+                      onPress={handleSaveBtn}
                     />
                   </View>
                 </TouchableOpacity>
@@ -882,18 +891,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "whitesmoke",
   },
   centered: {
-    flex: 1,
-    width: width,
-    alignItems: "center",
-    paddingBottom: height * 0.015,
-  },
-  addCentered: {
     flex: 1,
     width: width,
     backgroundColor: "whitesmoke",

@@ -118,7 +118,7 @@ function AddUserPage({ navigation }) {
     try {
       const uploadResponse = await S3Client.putObject(params).promise();
     } catch (error) {
-      console.log(error);
+      console.warn(error);
     }
   };
 
@@ -181,10 +181,10 @@ function AddUserPage({ navigation }) {
               ) {
                 const delayed = setTimeout(() => {
                   navigation.navigate("UsersHome");
-                }, 1000);
+                }, 2000);
               }
             } catch (error) {
-              console.error(error);
+              console.warn(error);
             }
           } else {
             const tagId = "SITE_" + siteId + "_TAG_" + userTag.toUpperCase();
@@ -212,9 +212,15 @@ function AddUserPage({ navigation }) {
                       Key: {
                         user_name: { S: getTagResponse.Item["user_name"].S },
                       },
-                      UpdateExpression: "SET user_tag = :value1",
+                      UpdateExpression:
+                        "SET #attr1 = :value1, #attr2 = :value2",
+                      ExpressionAttributeNames: {
+                        "#attr1": "user_tag",
+                        "#attr2": "location",
+                      },
                       ExpressionAttributeValues: {
-                        ":value1": { S: "" },
+                        ":value1": { S: tagId },
+                        ":value2": { L: [] },
                       },
                       ReturnValues: "ALL_NEW",
                     };
@@ -224,7 +230,7 @@ function AddUserPage({ navigation }) {
                     );
                     unpairOldUserFinish = 2;
                   } catch (error) {
-                    console.error(error);
+                    console.warn(error);
                   }
                 }
                 try {
@@ -273,14 +279,14 @@ function AddUserPage({ navigation }) {
                   ) {
                     const delayed = setTimeout(() => {
                       navigation.navigate("UsersHome");
-                    }, 1000);
+                    }, 2000);
                   }
                 } catch (error) {
-                  console.error(error);
+                  console.warn(error);
                 }
               }
             } catch (error) {
-              console.error(error);
+              console.warn(error);
             }
           }
         } else {
@@ -288,7 +294,7 @@ function AddUserPage({ navigation }) {
           showDialog(3); // Invalid User Name
         }
       } catch (error) {
-        console.error(error);
+        console.warn(error);
       }
     }
   };
@@ -303,7 +309,7 @@ function AddUserPage({ navigation }) {
         >
           <View style={{ flex: 1, backgroundColor: "whitesmoke" }}>
             <Stack
-              style={styles.addCentered}
+              style={styles.centered}
               direction="column"
               spacing={height * 0.05}
             >
@@ -451,12 +457,9 @@ function AddUserPage({ navigation }) {
                     <Button
                       style={{
                         width: width * 0.4,
-                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
-                        paddingTop: 10,
-                        paddingBottom: 10,
-                        borderWidth: 2,
+                        borderWidth: 1,
                         borderColor: "royalblue",
                       }}
                       variant="outlined"
@@ -478,7 +481,6 @@ function AddUserPage({ navigation }) {
                     <Button
                       style={{
                         width: width * 0.4,
-                        height: height * 0.05,
                         alignItems: "center",
                         justifyContent: "center",
                       }}
@@ -487,7 +489,7 @@ function AddUserPage({ navigation }) {
                       leading={(props) => (
                         <Ionicons
                           name="person-add-sharp"
-                          size={24}
+                          size={20}
                           color="white"
                         />
                       )}
@@ -639,18 +641,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "whitesmoke",
   },
   centered: {
-    flex: 1,
-    width: width,
-    alignItems: "center",
-    paddingBottom: height * 0.015,
-  },
-  addCentered: {
     flex: 1,
     width: width,
     alignItems: "center",

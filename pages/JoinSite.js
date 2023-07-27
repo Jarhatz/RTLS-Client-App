@@ -42,7 +42,6 @@ const JoinSitePage = () => {
   };
 
   const checkCode = async (code, codeType) => {
-    console.log("got here!");
     var params;
     if (codeType) {
       params = {
@@ -296,7 +295,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    // paddingTop: height * 0.1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#fff",
