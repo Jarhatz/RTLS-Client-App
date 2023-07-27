@@ -184,7 +184,7 @@ function AddUserPage({ navigation }) {
                 }, 2000);
               }
             } catch (error) {
-              console.error(error);
+              console.warn(error);
             }
           } else {
             const tagId = "SITE_" + siteId + "_TAG_" + userTag.toUpperCase();
@@ -212,9 +212,15 @@ function AddUserPage({ navigation }) {
                       Key: {
                         user_name: { S: getTagResponse.Item["user_name"].S },
                       },
-                      UpdateExpression: "SET user_tag = :value1",
+                      UpdateExpression:
+                        "SET #attr1 = :value1, #attr2 = :value2",
+                      ExpressionAttributeNames: {
+                        "#attr1": "user_tag",
+                        "#attr2": "location",
+                      },
                       ExpressionAttributeValues: {
-                        ":value1": { S: "" },
+                        ":value1": { S: tagId },
+                        ":value2": { L: [] },
                       },
                       ReturnValues: "ALL_NEW",
                     };
@@ -224,7 +230,7 @@ function AddUserPage({ navigation }) {
                     );
                     unpairOldUserFinish = 2;
                   } catch (error) {
-                    console.error(error);
+                    console.warn(error);
                   }
                 }
                 try {
@@ -276,11 +282,11 @@ function AddUserPage({ navigation }) {
                     }, 2000);
                   }
                 } catch (error) {
-                  console.error(error);
+                  console.warn(error);
                 }
               }
             } catch (error) {
-              console.error(error);
+              console.warn(error);
             }
           }
         } else {
@@ -288,7 +294,7 @@ function AddUserPage({ navigation }) {
           showDialog(3); // Invalid User Name
         }
       } catch (error) {
-        console.error(error);
+        console.warn(error);
       }
     }
   };

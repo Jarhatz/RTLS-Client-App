@@ -400,9 +400,14 @@ function EditUserPage({ route, navigation }) {
                   Key: {
                     user_name: { S: newTagResponse.Item.user_name.S },
                   },
-                  UpdateExpression: "SET user_tag = :value",
+                  UpdateExpression: "SET #attr1 = :value1, #attr2 = :value2",
+                  ExpressionAttributeNames: {
+                    "#attr1": "user_tag",
+                    "#attr2": "location",
+                  },
                   ExpressionAttributeValues: {
-                    ":value": { S: "" },
+                    ":value1": { S: "" },
+                    ":value2": { L: [] },
                   },
                   ReturnValues: "ALL_NEW",
                 };
@@ -422,9 +427,14 @@ function EditUserPage({ route, navigation }) {
                 Key: {
                   user_name: { S: userName },
                 },
-                UpdateExpression: "SET user_tag = :value1",
+                UpdateExpression: "SET #attr1 = :value1, #attr2 = :value2",
+                ExpressionAttributeNames: {
+                  "#attr1": "user_tag",
+                  "#attr2": "location",
+                },
                 ExpressionAttributeValues: {
                   ":value1": { S: tagId },
+                  ":value2": { L: [] },
                 },
                 ReturnValues: "ALL_NEW",
               };
